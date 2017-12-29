@@ -99,11 +99,11 @@ EOF
 # the number of labels
 seq 200 100 500 | while read num_epochs; do
 	seq 10 | while read trial; do
-		echo "$JOB_SCRIPT" | qsub -v num_epochs="num_$epochs",num_labels="10",trial="$trial" -
+		echo "$JOB_SCRIPT" | qsub -v "num_epochs=$num_epochs,num_labels=10,trial=$trial" -
 	done
 done
 seq 5 5 25 | while read num_labels; do
 	seq 10 | while read trial; do
-		echo "$JOB_SCRIPT" | qsub -v num_epochs="200",num_labels="$num_labels",trial="$trial" -
+		echo "$JOB_SCRIPT" | qsub -v "num_epochs=200,num_labels=$num_labels,trial=$trial" -
 	done
 done
