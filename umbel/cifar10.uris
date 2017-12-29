@@ -1,0 +1,10 @@
+airplane	umbel-rc:Airplane
+automobile	umbel-rc:Automobile
+bird	umbel-rc:Bird
+cat	umbel-rc:Cat
+deer	umbel-rc:Deer
+dog	umbel-rc:Dog
+frog	umbel-rc:Frog
+horse	umbel-rc:Horse
+ship	umbel-rc:Ship
+truck	umbel-rc:Truck
