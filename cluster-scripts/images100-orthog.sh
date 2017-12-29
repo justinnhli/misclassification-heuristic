@@ -81,7 +81,7 @@ pbs_startjob() {
 
 	cd "\$PBS_O_WORKDIR" && cd .. && \
 	source "\$VENV/bin/activate" && \
-	/home/justinnhli/glibc-install/lib/ld-linux-x86-64.so.2 --library-path /home/justinnhli/glibc-install/lib:/home/justinnhli/gcc-install/lib64/:/lib64:/usr/lib64 ~/.venv/aaai2018/bin/python3 images.py --dataset=cifar100 --num-epochs=$num_epochs --num-labels=$num_labels && \
+	/home/justinnhli/glibc-install/lib/ld-linux-x86-64.so.2 --library-path /home/justinnhli/glibc-install/lib:/home/justinnhli/gcc-install/lib64/:/lib64:/usr/lib64 ~/.venv/aaai2018/bin/python3 images.py --dataset=cifar100 --num-epochs=\$num_epochs --num-labels=\$num_labels && \
 	deactivate
 }
 
