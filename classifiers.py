@@ -5,6 +5,9 @@ from os.path import exists as file_exists, join as join_path
 from random import shuffle
 from statistics import mean
 
+FILE_DIR = dirname(realpath(__file__))
+
+
 class DomainUtils:
 
     @classmethod
@@ -133,7 +136,7 @@ class RegretTrial:
     def get_persistent_id(self):
         classifier_id = self.classifier.get_persistent_id()
         dataset_id = self.dataset.get_persistent_id()
-        return join_path(self.path_prefix, '{}_{}'.format(classifier_id, dataset_id))
+        return join_path(FILE_DIR, self.path_prefix, '{}_{}'.format(classifier_id, dataset_id))
 
     def all_ys(self):
         return self.old_ys() + self.new_ys()

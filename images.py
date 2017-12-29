@@ -4,6 +4,7 @@ import re
 from argparse import ArgumentParser
 from collections import defaultdict
 from random import sample
+from os.path import dirname, realpath, join as join_path
 
 import numpy as np
 from keras.optimizers import rmsprop
@@ -16,9 +17,11 @@ from keras.utils import to_categorical
 
 from classifiers import DomainUtils, Classifier, Dataset, RegretTrial
 
-with open('umbel/cifar10.uris') as fd:
+FILE_DIR = dirname(realpath(__file__))
+
+with open(join_path(FILE_DIR, 'umbel/cifar10.uris')) as fd:
     LABELS_10 = list(line.strip().split('\t') for line in fd.readlines())
-with open('umbel/cifar100.uris') as fd:
+with open(join_path(FILE_DIR, 'umbel/cifar100.uris')) as fd:
     LABELS_100 = list(line.strip().split('\t') for line in fd.readlines())
 
 class ImageUtils(DomainUtils):
@@ -28,11 +31,11 @@ class ImageUtils(DomainUtils):
         if self.dataset_str == 'cifar10':
             self.labels = [pair[0] for pair in LABELS_10]
             self.concept_label_map = dict((v, k) for k, v in LABELS_10)
-            self.distance_file = 'umbel/cifar10.distances'
+            self.distance_file = join_path(FILE_DIR, 'umbel/cifar10.distances')
         elif self.dataset_str == 'cifar100':
             self.labels = [pair[0] for pair in LABELS_100]
             self.concept_label_map = dict((v, k) for k, v in LABELS_100)
-            self.distance_file = 'umbel/cifar100.distances'
+            self.distance_file = join_path(FILE_DIR, 'umbel/cifar100.distances')
         self.umbel_distances = defaultdict(dict)
         with open(self.distance_file) as fd:
             for line in fd.read().splitlines():
