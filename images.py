@@ -309,7 +309,7 @@ def main():
         int_labels = sample_classes(10, args.num_labels)
     elif args.dataset == 'cifar100':
         int_labels = sample_classes(100, args.num_labels)
-    train_neural_network(int_labels, args.batch, args.epochs, args.dataset, verbose=args.verbose)
+    train_neural_network(int_labels, args.batch_size, args.num_epochs, args.dataset, verbose=args.verbose)
 
 
 if __name__ == '__main__':
