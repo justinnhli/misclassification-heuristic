@@ -4,7 +4,8 @@ import re
 from argparse import ArgumentParser
 from collections import defaultdict
 from random import sample
-from os.path import dirname, realpath, join as join_path
+from os import mkdir
+from os.path import dirname, isdir, realpath, join as join_path, exists as file_exists
 
 import numpy as np
 from keras.optimizers import rmsprop
@@ -154,6 +155,12 @@ class ImageDataset(Dataset):
 
 
 def train_neural_network(int_labels, batch_size, num_epochs, dataset_str, verbose=False):
+    OUTPUT_PATH = 'images'
+    if file_exists(OUTPUT_PATH):
+        assert isdir(OUTPUT_PATH), '"{}" exists but is not a directory'.format(OUTPUT_PATH)
+    else:
+        mkdir(OUTPUT_PATH)
+
     # load the data
     if dataset_str == 'cifar10':
         (x_train, y_train), (x_test, y_test) = cifar10.load_data()
@@ -243,12 +250,12 @@ def train_neural_network(int_labels, batch_size, num_epochs, dataset_str, verbos
         verbose=(1 if verbose else 0),
     )
 
-    filepath = 'images/image{}l{}b{:02d}e{:03d}.hdf5'.format(
+    filepath = join_path(OUTPUT_PATH, 'image{}l{}b{:02d}e{:03d}.hdf5'.format(
         dataset_str[5:],
         str(ints_to_binary(int_labels)),
         batch_size,
         num_epochs
-    )
+    ))
     model.save(filepath)
 
     return NeuralNetwork(filepath)
