@@ -67,7 +67,7 @@ class NeuralNetwork(Classifier):
 
     def __init__(self, filepath):
         self.model = load_model(filepath)
-        match = re.match('image([0-9]+)l([0-9]+)b([0-9]+)e([0-9]+).hdf5', filepath)
+        match = re.search('image([0-9]+)l([0-9]+)b([0-9]+)e([0-9]+).hdf5$', filepath)
         self.dataset_str = 'cifar' + match.group(1)
         self.int_labels = binary_to_ints(int(match.group(2)))
         self.batch_size = int(match.group(3))
