@@ -88,7 +88,7 @@ def print_help():
     exit()
 
 
-def parse_var(arg):
+def parse_var(arg, force_list=True):
     var, vals = arg.split('=', maxsplit=1)
     var = var[2:]
     if not re.match('^[a-z]([_a-z0-9-]*?[a-z0-9])?$', var):
@@ -97,7 +97,7 @@ def parse_var(arg):
         vals = literal_eval(vals)
     except ValueError:
         vals = vals
-    if isinstance(vals, tuple([int, float, str])):
+    if force_list and isinstance(vals, tuple([int, float, str])):
         vals = [vals]
     return var, vals
 
@@ -105,6 +105,7 @@ def parse_var(arg):
 def parse_args():
     variables = []
     command = None
+    kwargs = {}
     last_arg_index = 0
     for i, arg in enumerate(sys.argv[1:], start=1):
         if arg in ('-h', '--help'):
@@ -115,18 +116,21 @@ def parse_args():
                 break
             var, vals = parse_var(arg)
             variables.append([var, vals])
+        elif arg.startswith('-'):
+            key, val = parse_var(arg, force_list=False)
+            kwargs[key] = val
         else:
             break
         last_arg_index = i
     command = ' '.join(sys.argv[last_arg_index + 1:])
-    return variables, command
+    return variables, command, kwargs
 
 
 def main():
-    variables, command = parse_args()
+    variables, command, kwargs = parse_args()
     # print script
     job_name = 'from_cmd_' + datetime.now().strftime('%Y%m%d%H%M%S')
-    pbs_job = PBS_Job(job_name, [command])
+    pbs_job = PBS_Job(job_name, [command], **kwargs)
     print(pbs_job.generate_script())
     print()
     print(40 * '-')
