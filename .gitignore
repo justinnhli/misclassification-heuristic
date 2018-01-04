@@ -2,3 +2,4 @@
 **/*.predictions
 **/*.regrets
 **/*.summary
+**/pbs-*
