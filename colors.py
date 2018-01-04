@@ -208,8 +208,8 @@ def from_file(filepath):
     # parse parameters
     classifier_match = re.match('colors(?P<k>[0-9]+)', classifier_id)
     num_old_colors = int(classifier_match.group('k'))
-    dataset_match = re.match('s(?P<s>[0-9]+)n(?P<n>[0-9]+)k(?P<k>[0-9]+)', dataset_id)
-    random_seed = int(dataset_match.group('s'))
+    dataset_match = re.match('s(?P<s>[0-9.]+)n(?P<n>[0-9]+)k(?P<k>[0-9]+)', dataset_id)
+    random_seed = float(dataset_match.group('s'))
     num_samples = int(dataset_match.group('n'))
     num_new_colors = int(dataset_match.group('k'))
     # create classifier, dataset, and regret trial
