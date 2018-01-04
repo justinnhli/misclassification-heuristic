@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
 import re
+from argparse import ArgumentParser
 from os.path import basename, dirname, expanduser, join as join_path, realpath, splitext
-from random import seed as set_seed, randrange
+from random import seed as set_seed, random, randrange
 
 from classifiers import DomainUtils, Classifier, Dataset, RegretTrial
 
@@ -229,26 +230,43 @@ def from_file(filepath):
 
 
 def main():
-    NUM_OLD_COLORS = 10
-    NUM_NEW_COLORS = 20
-    NUM_TEST_COLORS = 1000
-    # create classifier (old labels)
+    arg_parser = ArgumentParser()
+    arg_parser.add_argument('--num-old-labels', type=int, default=20, help='number of labels to use')
+    arg_parser.add_argument('--num-new-labels', type=int, default=50, help='number of labels to use')
+    arg_parser.add_argument('--dataset-size', type=int, default=1000, help='number of labels to use')
+    arg_parser.add_argument('--random-seed-index', type=int, default=1, help='number of labels to use')
+
+    args = arg_parser.parse_args()
+    if args.num_old_labels <= 0:
+        arg_parser.error('--num-old-labels must be larger than 0')
+    if args.random_seed_index <= 0:
+        arg_parser.error('--random-seed-index must be larger than 0')
+    if args.num_new_labels <= args.num_old_labels:
+        arg_parser.error('--num-new-labels must be larger than --num-old-labels')
+
+    set_seed(8675309)
+    random_seed = 0
+    for _ in range(args.random_seed_index):
+        random_seed = random()
+
+    # create classifier
     classifier = NearestCentroid(
-        CENTROIDS[:NUM_OLD_COLORS],
-        ColorUtils(CENTROIDS[:NUM_OLD_COLORS]),
+        CENTROIDS[:args.num_old_labels],
+        ColorUtils(CENTROIDS[:args.num_old_labels]),
     )
+
     # create regret testing data (new labels)
-    random_seed = 8675309 # FIXME
     dataset = ColorDataset(
-        NUM_TEST_COLORS,
+        args.dataset_size,
         random_seed,
-        NUM_NEW_COLORS,
-        ColorUtils(CENTROIDS[:NUM_NEW_COLORS]),
+        args.num_new_labels,
+        ColorUtils(CENTROIDS[:args.num_new_labels]),
     )
+
     # create regret trial
     RegretTrial(
         classifier,
-        ColorUtils(CENTROIDS[:NUM_NEW_COLORS]),
+        ColorUtils(CENTROIDS[:args.num_new_labels]),
         dataset,
         path_prefix='colors',
     )
