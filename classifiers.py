@@ -130,8 +130,8 @@ class RegretTrial:
         self.classifier = classifier
         self.domain_utils = domain_utils
         self.dataset = dataset
-        self.regrets = self.load_regrets()
         self.path_prefix = path_prefix
+        self.regrets = self.load_regrets()
 
     def get_persistent_id(self):
         classifier_id = self.classifier.get_persistent_id()
