@@ -202,6 +202,7 @@ class ColorDataset(Dataset):
 
 
 def from_file(filepath):
+    path_prefix = dirname(filepath)
     filename = splitext(basename(filepath))[0]
     classifier_id, dataset_id = filename.split('_', maxsplit=1)
     # parse parameters
@@ -226,6 +227,7 @@ def from_file(filepath):
         classifier,
         ColorUtils(CENTROIDS[:num_new_colors]),
         dataset,
+        path_prefix=path_prefix,
     )
 
 
