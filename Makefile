@@ -1,5 +1,5 @@
 test:
-	python3 clusterun.py \
+	/usr/bin/env python3 clusterun.py \
 		--num-old-labels=20 \
 		--num-new-labels=50 \
 		--dataset-size=1000 \
@@ -7,7 +7,7 @@ test:
 		'python3 colors.py --num-old-labels="$num_old_labels" --num-new-labels="$num_new_labels" --dataset-size="$dataset_size" --random-seed-index="$random_seed_index"'
 
 color-dataset:
-	python3 clusterun.py \
+	/usr/bin/env python3 clusterun.py \
 		--num-old-labels=[10, 20, 50, 100, 200] \
 		--num-new-labels=[20, 50, 100, 200] \
 		--dataset-size=[1000, 10000, 100000, 1000000] \
