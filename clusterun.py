@@ -22,11 +22,7 @@ class PBS_Job:
         #PBS -v {variables}
         #PBS -r n
 
-        run_job() {{
-            {commands}
-        }}
-
-        run_job
+        {commands}
     ''').strip()
 
     def __init__(self, name, commands, queue=None, venv=None):
@@ -49,7 +45,7 @@ class PBS_Job:
                 'deactivate'
             ]
             commands = prefixes + commands + suffixes
-        return ' && \\\n'.join(commands)
+        return '\n'.join(commands)
 
     def generate_script(self, *args, **kwargs):
         variables = ','.join('{}={}'.format(k, v) for k, v in args)
@@ -90,7 +86,7 @@ def print_help():
 
 def parse_var(arg, force_list=True):
     var, vals = arg.split('=', maxsplit=1)
-    var = var[2:]
+    var = var[2:].replace('-', '_')
     if not re.match('^[a-z]([_a-z0-9-]*?[a-z0-9])?$', var):
         raise ValueError('Invalid variable name: "{}"'.format(var))
     try:
@@ -130,7 +126,8 @@ def main():
     variables, command, kwargs = parse_args()
     # print script
     job_name = 'from_cmd_' + datetime.now().strftime('%Y%m%d%H%M%S')
-    pbs_job = PBS_Job(job_name, [command], **kwargs)
+    commands = ['cd "$PBS_O_WORKDIR"', command]
+    pbs_job = PBS_Job(job_name, commands, **kwargs)
     print(pbs_job.generate_script())
     print()
     print(40 * '-')
