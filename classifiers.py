@@ -245,6 +245,15 @@ class RegretTrial:
     def label_max_regret(self, new_label):
         return self.regrets[new_label]['max_regret']
 
+    def mean_regret_scaled(self):
+        return mean(self.label_mean_regret(new_label) / self.label_max_regret(new_label) for new_label in self.new_ys())
+
+    def mean_regret(self):
+        return mean(self.label_mean_regret(new_label) for new_label in self.new_ys())
+
+    def mean_accuracy(self):
+        return mean(self.label_accuracy(old_label) for old_label in self.old_ys())
+
     def get_summary_file(self):
         return join_path(self.get_data_path(), self.get_persistent_id() + '.summary')
 
