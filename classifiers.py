@@ -1,6 +1,7 @@
 from ast import literal_eval
 from collections import defaultdict, Counter
 from itertools import groupby
+from os import remove as rm
 from os.path import dirname, realpath, exists as file_exists, join as join_path
 from random import shuffle
 from statistics import mean
@@ -136,7 +137,10 @@ class RegretTrial:
     def get_persistent_id(self):
         classifier_id = self.classifier.get_persistent_id()
         dataset_id = self.dataset.get_persistent_id()
-        return join_path(FILE_DIR, self.path_prefix, '{}_{}'.format(classifier_id, dataset_id))
+        return classifier_id + '_' + dataset_id
+
+    def get_data_path(self):
+        return join_path(FILE_DIR, self.path_prefix)
 
     def all_ys(self):
         return self.old_ys() + self.new_ys()
@@ -148,7 +152,7 @@ class RegretTrial:
         return list(set(self.dataset.get_y()))
 
     def get_regrets_file(self):
-        return self.get_persistent_id() + '.regrets'
+        return join_path(self.get_data_path(), self.get_persistent_id() + '.regrets')
 
     def load_regrets(self):
         if not file_exists(self.get_regrets_file()):
@@ -160,8 +164,13 @@ class RegretTrial:
                     fd.write('    {}:{},\n'.format(repr('max_regret'), self._calculate_label_max_regret(new_y)))
                     fd.write('},\n')
                 fd.write('}\n')
-        with open(self.get_regrets_file()) as fd:
-            return literal_eval(fd.read())
+        try:
+            with open(self.get_regrets_file()) as fd:
+                cached = literal_eval(fd.read())
+        except SyntaxError:
+            rm(self.get_regrets_file())
+            cached = self.load_regrets()
+        return cached
 
     def _calculate_label_mean_regret(self, new_y):
         misclassifications = self.label_misclassification_order(new_y)
@@ -237,7 +246,7 @@ class RegretTrial:
         return self.regrets[new_label]['max_regret']
 
     def get_summary_file(self):
-        return self.get_persistent_id() + '.summary'
+        return join_path(self.get_data_path(), self.get_persistent_id() + '.summary')
 
     def load_summary(self):
         """Load, or calculate and cache, a summary of this trial
@@ -259,11 +268,16 @@ class RegretTrial:
                 for y_hat, counter in sorted(stats.items()):
                     fd.write('    {}: {},\n'.format(repr(y_hat), repr(counter)))
                 fd.write('}\n')
-        with open(self.get_summary_file()) as fd:
-            return literal_eval(fd.read())
+        try:
+            with open(self.get_summary_file()) as fd:
+                cached = literal_eval(fd.read())
+        except SyntaxError:
+            rm(self.get_summary_file())
+            cached = self.load_summary()
+        return cached
 
     def get_predictions_file(self):
-        return self.get_persistent_id() + '.predictions'
+        return join_path(self.get_data_path(), self.get_persistent_id() + '.predictions')
 
     def load_predictions(self):
         """Load, or calculate and cache, the classifications of this dataset
@@ -278,8 +292,13 @@ class RegretTrial:
                 for y in predictions:
                     fd.write('    {},\n'.format(repr(y)))
                 fd.write(']\n')
-        with open(self.get_predictions_file()) as fd:
-            return literal_eval(fd.read())
+        try:
+            with open(self.get_predictions_file()) as fd:
+                cached = literal_eval(fd.read())
+        except SyntaxError:
+            rm(self.get_predictions_file())
+            cached = self.load_predictions()
+        return cached
 
 
 def bucket_alist(alist):
