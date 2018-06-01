@@ -5,7 +5,7 @@ from argparse import ArgumentParser
 from collections import defaultdict
 from random import sample
 from os import mkdir
-from os.path import dirname, isdir, realpath, join as join_path, exists as file_exists
+from os.path import basename, dirname, isdir, realpath, join as join_path, exists as file_exists
 
 import numpy as np
 from keras.optimizers import rmsprop
@@ -66,10 +66,14 @@ class ImageUtils(DomainUtils):
 
 class NeuralNetwork(Classifier):
 
-    def __init__(self, filepath):
-        self.model = load_model(filepath)
-        match = re.search('image([0-9]+)l([0-9]+)b([0-9]+)e([0-9]+).hdf5$', filepath)
-        self.dataset_str = 'cifar' + match.group(1)
+    def __init__(self, filepath, load_network=True):
+        if load_network:
+            self.model = load_model(filepath)
+        else:
+            self.model = None
+        match = re.search('([^-]+)-l([0-9]+)-b([0-9]+)-e([0-9]+).hdf5$', basename(filepath))
+        assert match, 'Cannot parse filename "{}"'.format(filepath)
+        self.dataset_str = match.group(1)
         self.int_labels = binary_to_ints(int(match.group(2)))
         self.batch_size = int(match.group(3))
         self.num_epochs = int(match.group(4))
@@ -80,8 +84,8 @@ class NeuralNetwork(Classifier):
         Returns:
             str: an id for this classifier
         """
-        return 'image{}l{}b{:02d}e{:03d}'.format(
-            self.dataset_str[5:],
+        return '{}-l{}-b{:02d}-e{:03d}'.format(
+            self.dataset_str,
             str(ints_to_binary(self.int_labels)),
             self.batch_size,
             self.num_epochs,
@@ -250,12 +254,15 @@ def train_neural_network(int_labels, batch_size, num_epochs, dataset_str, verbos
         verbose=(1 if verbose else 0),
     )
 
-    filepath = join_path(OUTPUT_PATH, 'image{}l{}b{:02d}e{:03d}.hdf5'.format(
-        dataset_str[5:],
-        str(ints_to_binary(int_labels)),
-        batch_size,
-        num_epochs
-    ))
+    filepath = join_path(
+        OUTPUT_PATH,
+        '{}-l{}-b{:02d}-e{:03d}.hdf5'.format(
+            dataset_str,
+            str(ints_to_binary(int_labels)),
+            batch_size,
+            num_epochs,
+        ),
+    )
     model.save(filepath)
 
     return NeuralNetwork(filepath)
