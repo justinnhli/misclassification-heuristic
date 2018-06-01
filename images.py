@@ -41,6 +41,12 @@ class ImageUtils(DomainUtils):
         with open(uri_file) as fd:
             for line in fd.readlines():
                 label, uri = line.strip().split('\t')
+                # HACK deal with 'aquarium fish', which doesn't have a clear concept
+                if label != 'aquarium fish':
+                    self.labels.append(label)
+                    self.concept_label_map[uri] = label
+                else:
+                    self.labels.append(None)
         # read in distance data
         with open(distance_file) as fd:
             for line in fd.read().splitlines():
@@ -56,7 +62,8 @@ class ImageUtils(DomainUtils):
                 self.umbel_distances[label][label] = 0
 
     def class_to_label(self, y):
-        return self.labels[y]
+        result = self.labels[y]
+        assert result, 'Looking up "{}", which is "aquarium fish"'.format(y)
 
     def label_to_class(self, label):
         return self.labels.index(label)
@@ -147,7 +154,10 @@ class ImageDataset(Dataset):
         if self.dataset_str == 'cifar10':
             (_, _), (x_test, _) = cifar10.load_data()
         elif self.dataset_str == 'cifar100':
-            (_, _), (x_test, _) = cifar100.load_data()
+            (_, _), (x_test, y_test) = cifar100.load_data()
+            # filter out aquarium fish
+            indicator = (y_test != 6).reshape(y_test.shape[0])
+            return x_test[indicator, :, :, :]
         else:
             assert False
         return x_test
@@ -157,6 +167,9 @@ class ImageDataset(Dataset):
             (_, _), (_, y_test) = cifar10.load_data()
         elif self.dataset_str == 'cifar100':
             (_, _), (_, y_test) = cifar100.load_data()
+            # filter out aquarium fish
+            indicator = (y_test != 6).reshape(y_test.shape[0])
+            return y_test[indicator, :]
         else:
             assert False
         return y_test.transpose().tolist()[0]
@@ -177,6 +190,13 @@ def train_neural_network(int_labels, batch_size, num_epochs, dataset_str, verbos
         (x_train, y_train), (x_test, y_test) = cifar10.load_data()
     else:
         (x_train, y_train), (x_test, y_test) = cifar100.load_data()
+        # filter out aquarium fish
+        indicator = (y_train != 6).reshape(y_train.shape[0])
+        x_train = x_train[indicator, :, :, :]
+        y_train = y_train[indicator, :]
+        indicator = (y_test != 6).reshape(y_test.shape[0])
+        x_test = x_test[indicator, :, :, :]
+        y_test = y_test[indicator, :]
 
     # remove unused labels
     label_filter = np.in1d(y_train, int_labels)
