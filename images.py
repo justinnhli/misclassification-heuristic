@@ -20,6 +20,7 @@ from classifiers import DomainUtils, Classifier, Dataset
 
 FILE_DIR = dirname(realpath(__file__))
 
+
 class ImageUtils(DomainUtils):
 
     def __init__(self, dataset_str):
@@ -161,12 +162,15 @@ class ImageDataset(Dataset):
         return y_test.transpose().tolist()[0]
 
 
-def train_neural_network(int_labels, batch_size, num_epochs, dataset_str, verbose=False):
-    OUTPUT_PATH = 'images'
-    if file_exists(OUTPUT_PATH):
-        assert isdir(OUTPUT_PATH), '"{}" exists but is not a directory'.format(OUTPUT_PATH)
+def from_file(filepath):
+    pass # FIXME
+
+
+def train_neural_network(int_labels, batch_size, num_epochs, dataset_str, verbose=False, output_path='images'):
+    if file_exists(output_path):
+        assert isdir(output_path), '"{}" exists but is not a directory'.format(output_path)
     else:
-        mkdir(OUTPUT_PATH)
+        mkdir(output_path)
 
     # load the data
     if dataset_str == 'cifar10':
@@ -258,7 +262,7 @@ def train_neural_network(int_labels, batch_size, num_epochs, dataset_str, verbos
     )
 
     filepath = join_path(
-        OUTPUT_PATH,
+        output_path,
         '{}-l{}-b{:02d}-e{:03d}.hdf5'.format(
             dataset_str,
             str(ints_to_binary(int_labels)),
@@ -281,6 +285,7 @@ def ints_to_binary(int_labels):
     """
     return sum(2**i for i in int_labels)
 
+
 def binary_to_ints(binary):
     """
     Arguments:
@@ -291,6 +296,7 @@ def binary_to_ints(binary):
     """
     binary_str = '{:b}'.format(binary)
     return sorted(i for i, b in enumerate(reversed(binary_str)) if b == '1')
+
 
 def sample_classes(p, k):
     int_labels = sample(range(p), k)

@@ -13,51 +13,51 @@ class DomainUtils:
 
     @classmethod
     def class_to_label(cls, y):
-        """Convert an integer class to a human-readable label
+        """Convert an integer class to a human-readable label.
 
         Arguments:
-            y (int): the integer class
+            y (int): the integer class.
 
         Returns:
-            str: the human-readable label
+            str: the human-readable label.
         """
         raise NotImplementedError()
 
     @classmethod
     def label_to_class(cls, label):
-        """Convert an integer class to a human-readable label
+        """Convert an integer class to a human-readable label.
 
         Arguments:
-            label (str): the human-readable label
+            label (str): the human-readable label.
 
         Returns:
-            int: the integer class
+            int: the integer class.
         """
         raise NotImplementedError()
 
     @classmethod
     def class_distance(cls, y1, y2):
-        """Calculate the distance between two classes
+        """Calculate the distance between two classes.
 
         Arguments:
-            y1 (int): the first class
-            y2 (int): the second class
+            y1 (int): the first class.
+            y2 (int): the second class.
 
         Returns:
-            float: the distance between the classes
+            float: the distance between the classes.
         """
         raise NotImplementedError()
 
     @classmethod
     def label_distance(cls, label1, label2):
-        """Calculate the distance between two labels
+        """Calculate the distance between two labels.
 
         Arguments:
-            label1 (str): the first label
-            label2 (str): the second label
+            label1 (str): the first label.
+            label2 (str): the second label.
 
         Returns:
-            float: the distance between the classes
+            float: the distance between the classes.
         """
         raise NotImplementedError()
 
@@ -65,50 +65,50 @@ class DomainUtils:
 class Classifier:
 
     def get_persistent_id(self):
-        """Get a persistent (string) id
+        """Get a persistent (string) id.
 
         Returns:
-            str: an id for this classifier
+            str: an id for this classifier.
         """
         raise NotImplementedError()
 
     def get_ys(self):
-        """Get the labels
+        """Get the labels.
 
         Returns:
-            [int]: the integer labels
+            [int]: the integer labels.
         """
         raise NotImplementedError()
 
     def classify(self, xs):
-        """Classify the data
+        """Classify the data.
 
         Arguments:
-            xs: the data to be classified
-                this can be whatever Dataset.get_x() returns
+            xs (list[object]): The data to be classified.
+                This can be whatever Dataset.get_x() returns.
 
         Returns:
-            [int]: the classifications
+            [int]: the classifications.
         """
         raise NotImplementedError()
 
     def to_file(self, filepath):
-        """Save the classifier to file
+        """Save the classifier to file.
 
         Arguments:
-            filepath (str): The file to save to
+            filepath (str): The file to save to.
         """
         raise NotImplementedError()
 
     @classmethod
     def from_file(cls, filepath):
-        """Create a classifier from file
+        """Create a classifier from file.
 
         Arguments:
-            filepath (str): The file to load from
+            filepath (str): The file to load from.
 
         Returns:
-            Classifier: 
+            Classifier: The classifier.
         """
         raise NotImplementedError()
 
@@ -183,7 +183,7 @@ class RegretTrial:
         return ranking_regret(misclassifications, worst_case_heuristic)
 
     def label_misclassification_order(self, new_y):
-        """The order of old labels by decreasing false positives of the new label.
+        """Get the order of old labels by decreasing false positives of the new label.
 
         Note the score is negated so that a standard sort will work.
 
@@ -194,7 +194,6 @@ class RegretTrial:
         Returns:
             [[str, int]]: the old labels and their (negated) false positives
         """
-
         misclassifications = []
         for old_y, counter in self.load_summary().items():
             if new_y in counter:
@@ -205,7 +204,7 @@ class RegretTrial:
         return sorted(misclassifications, key=(lambda kv: list(reversed(kv))))
 
     def label_distance_order(self, new_y):
-        """The order of old labels by increasing heuristic distance.
+        """Get the order of old labels by increasing heuristic distance.
 
         Arguments:
             new_y (str):
@@ -214,17 +213,12 @@ class RegretTrial:
         Returns:
             [[str, int]]: an generator of lists of orderings
         """
-
-        # FIXME this is no longer correct because we separate y and label
-        '''
-        if 'FIXME' in new_label:
-            return None
-        '''
         distances = [[old_y, self.domain_utils.class_distance(old_y, new_y)] for old_y in self.old_ys()]
         # lambda sorts by distance, then by label name
         return sorted(distances, key=(lambda kv: list(reversed(kv))))
 
     def label_accuracy(self, old_label):
+        # FIXME this is incorrect; need to separate accuracy and precision, I think
         summary = self.load_summary()
         return summary[old_label].loc[old_label] / sum(summary[old_label])
 
@@ -258,10 +252,10 @@ class RegretTrial:
         return join_path(self.get_data_path(), self.get_persistent_id() + '.summary')
 
     def load_summary(self):
-        """Load, or calculate and cache, a summary of this trial
+        """Load, or calculate and cache, a summary of this trial.
 
         Returns:
-            {y_hat: {y: int}}: a summary of the classification distribution
+            {y_hat: {y: int}}: a summary of the classification distribution.
         """
         if not file_exists(self.get_summary_file()):
             # create "table" of predictions
@@ -289,10 +283,10 @@ class RegretTrial:
         return join_path(self.get_data_path(), self.get_persistent_id() + '.predictions')
 
     def load_predictions(self):
-        """Load, or calculate and cache, the classifications of this dataset
+        """Load, or calculate and cache, the classifications of this dataset.
 
         Returns:
-            [y_hat]: a summary of the classification distribution
+            [y_hat]: a summary of the classification distribution.
         """
         if not file_exists(self.get_predictions_file()):
             predictions = self.classifier.classify(self.dataset.get_x())
@@ -311,13 +305,13 @@ class RegretTrial:
 
 
 def bucket_alist(alist):
-    """Group keys in an association list by their values
+    """Group keys in an association list by their values.
 
     Arguments:
-        alist [[str, int]]: A list of [str, int] association pairs
+        alist [[str, int]]: A list of [str, int] association pairs.
 
     Returns:
-        [int, [str]]: A list of grouped keys by their values
+        [int, [str]]: A list of grouped keys by their values.
     """
     values = dict(alist)
     keys = sorted(values.keys(), key=(lambda k: values[k]))
@@ -329,11 +323,11 @@ def intra_bucket_regret(bucket, groundtruth):
     """Calculate regret of one bucket.
 
     Arguments:
-        bucket [str]: A list of labels
-        groundtruth {str:int}: Label to misclassifications dictionary
+        bucket [str]: A list of labels.
+        groundtruth {str:int}: Label to misclassifications dictionary.
 
     Returns:
-        double: regret of the labels in the bucket
+        float: regret of the labels in the bucket.
     """
     groundtruth_ranking = sorted(
         ([label, groundtruth[label]] for label in bucket),
@@ -351,12 +345,12 @@ def inter_bucket_regret(bucket_1, bucket_2, groundtruth):
     """Calculate regret between two buckets.
 
     Arguments:
-        bucket_1 [str]: Labels in the first bucket
-        bucket_2 [str]: Labels in the second bucket
-        groundtruth {str:int}: Label to misclassifications dictionary
+        bucket_1 [str]: Labels in the first bucket.
+        bucket_2 [str]: Labels in the second bucket.
+        groundtruth {str:int}: Label to misclassifications dictionary.
 
     Returns:
-        double: regret of the labels due to between-bucket scores
+        float: regret of the labels due to between-bucket scores.
     """
     regret = 0
     for label_1 in bucket_1:
@@ -376,7 +370,7 @@ def ranking_regret(groundtruth_ranking, heuristic_ranking):
             A heuristic ranks of the labels
 
     Returns:
-        double: the mean regret over all total orders of the heuristic ranking
+        float: the mean regret over all total orders of the heuristic ranking
     """
     groundtruth = dict(groundtruth_ranking)
     heuristic_bucketed = bucket_alist(heuristic_ranking)
