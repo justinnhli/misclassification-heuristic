@@ -16,7 +16,7 @@ from keras.layers import Dense, Dropout, Activation, Flatten
 from keras.layers import Conv2D, MaxPooling2D
 from keras.utils import to_categorical
 
-from classifiers import DomainUtils, Classifier, Dataset, RegretTrial
+from classifiers import DomainUtils, Classifier, Dataset
 
 FILE_DIR = dirname(realpath(__file__))
 
@@ -271,12 +271,6 @@ def train_neural_network(int_labels, batch_size, num_epochs, dataset_str, verbos
     return NeuralNetwork(filepath)
 
 
-def labels_to_str(int_labels):
-    return [LABELS_10[i] for i in int_labels]
-
-def labels_to_int(str_labels):
-    return sorted(set(LABELS_10.index(label) for label in str_labels))
-
 def ints_to_binary(int_labels):
     """
     Arguments:
@@ -304,15 +298,6 @@ def sample_classes(p, k):
         int_labels = sample(range(p), k)
     return sorted(int_labels)
 
-def regret_trial_test():
-    nn = NeuralNetwork('image10l544b32e003.hdf5')
-    (_, _), (dataset, _) = cifar10.load_data()
-    RegretTrial(
-        nn,
-        ImageUtils('cifar10'),
-        ImageDataset('cifar10'),
-        path_prefix='images',
-    )
 
 def main():
     arg_parser = ArgumentParser()
