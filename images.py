@@ -20,25 +20,28 @@ from classifiers import DomainUtils, Classifier, Dataset, RegretTrial
 
 FILE_DIR = dirname(realpath(__file__))
 
-with open(join_path(FILE_DIR, 'umbel/cifar10.uris')) as fd:
-    LABELS_10 = list(line.strip().split('\t') for line in fd.readlines())
-with open(join_path(FILE_DIR, 'umbel/cifar100.uris')) as fd:
-    LABELS_100 = list(line.strip().split('\t') for line in fd.readlines())
-
 class ImageUtils(DomainUtils):
 
     def __init__(self, dataset_str):
+        assert dataset_str in ['cifar10', 'cifar100'], 'unrecognized dataset "{}"'.format(dataset_str)
+        # set data files
+        if dataset_str == 'cifar10':
+            uri_file = join_path(FILE_DIR, 'umbel/cifar10.uris')
+            distance_file = join_path(FILE_DIR, 'umbel/cifar10.distances')
+        elif dataset_str == 'cifar100':
+            uri_file = join_path(FILE_DIR, 'umbel/cifar100.uris')
+            distance_file = join_path(FILE_DIR, 'umbel/cifar100.distances')
+        # initialize data
         self.dataset_str = dataset_str
-        if self.dataset_str == 'cifar10':
-            self.labels = [pair[0] for pair in LABELS_10]
-            self.concept_label_map = dict((v, k) for k, v in LABELS_10)
-            self.distance_file = join_path(FILE_DIR, 'umbel/cifar10.distances')
-        elif self.dataset_str == 'cifar100':
-            self.labels = [pair[0] for pair in LABELS_100]
-            self.concept_label_map = dict((v, k) for k, v in LABELS_100)
-            self.distance_file = join_path(FILE_DIR, 'umbel/cifar100.distances')
+        self.labels = []
+        self.concept_label_map = {}
         self.umbel_distances = defaultdict(dict)
-        with open(self.distance_file) as fd:
+        # read in label-URI data
+        with open(uri_file) as fd:
+            for line in fd.readlines():
+                label, uri = line.strip().split('\t')
+        # read in distance data
+        with open(distance_file) as fd:
             for line in fd.read().splitlines():
                 match = re.match(r'^(umbel-rc:[^ ]*) -- (umbel-rc:[^ ]*) \(([^)]*)\)$', line)
                 if not match:
