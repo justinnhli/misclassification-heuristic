@@ -220,7 +220,14 @@ class RegretTrial:
     def label_accuracy(self, old_label):
         # FIXME this is incorrect; need to separate accuracy and precision, I think
         summary = self.load_summary()
-        return summary[old_label].loc[old_label] / sum(summary[old_label])
+        total_predicted = sum(summary[old_label])
+        correct_predicted = summary[old_label].get(old_label, 0)
+        # FIXME definite hack
+        # unsure why a classifier would end up with no data in a label
+        if total_predicted == 0:
+            return 0
+        else:
+            return correct_predicted / total_predicted
 
     def label_random_regret(self, new_label):
         misclassifications = self.label_misclassification_order(new_label)
@@ -268,7 +275,8 @@ class RegretTrial:
                 stats[y_hat] = dict(counter)
             with open(self.get_summary_file(), 'w') as fd:
                 fd.write('{\n')
-                for y_hat, counter in sorted(stats.items()):
+                for y_hat in sorted(self.old_ys()):
+                    counter = stats.get(y_hat, {})
                     fd.write('    {}: {},\n'.format(repr(y_hat), repr(counter)))
                 fd.write('}\n')
         try:
