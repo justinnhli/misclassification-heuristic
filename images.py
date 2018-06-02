@@ -81,17 +81,21 @@ class ImageUtils(DomainUtils):
 
 class NeuralNetwork(Classifier):
 
-    def __init__(self, filepath, load_network=True):
-        if load_network:
-            self.model = load_model(filepath)
-        else:
-            self.model = None
+    def __init__(self, filepath):
         match = re.search('([^-]+)-l([0-9]+)-b([0-9]+)-e([0-9]+).hdf5$', basename(filepath))
         assert match, 'Cannot parse filename "{}"'.format(filepath)
+        self.filepath = filepath
+        self._model = None
         self.dataset_str = match.group(1)
         self.int_labels = binary_to_ints(int(match.group(2)))
         self.batch_size = int(match.group(3))
         self.num_epochs = int(match.group(4))
+
+    @property
+    def model(self):
+        if self._model is None:
+            self._model = load_model(filepath)
+        return self._model
 
     def get_persistent_id(self):
         """Get a persistent (string) id
