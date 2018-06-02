@@ -20,6 +20,9 @@ from classifiers import DomainUtils, Classifier, Dataset
 
 FILE_DIR = dirname(realpath(__file__))
 
+AQUARIUM_FISH_Y = 5
+AQUARIUM_FISH = 'aquarium fish'
+
 
 class ImageUtils(DomainUtils):
 
@@ -41,8 +44,8 @@ class ImageUtils(DomainUtils):
         with open(uri_file) as fd:
             for line in fd.readlines():
                 label, uri = line.strip().split('\t')
-                # HACK deal with 'aquarium fish', which doesn't have a clear concept
-                if label != 'aquarium fish':
+                # HACK deal with AQUARIUM_FISH, which doesn't have a clear concept
+                if label != AQUARIUM_FISH:
                     self.labels.append(label)
                     self.concept_label_map[uri] = label
                 else:
@@ -63,7 +66,8 @@ class ImageUtils(DomainUtils):
 
     def class_to_label(self, y):
         result = self.labels[y]
-        assert result, 'Looking up "{}", which is "aquarium fish"'.format(y)
+        assert result is not None, 'Looking up "{}", which is "aquarium fish"'.format(y)
+        return result
 
     def label_to_class(self, label):
         return self.labels.index(label)
@@ -156,10 +160,8 @@ class ImageDataset(Dataset):
         elif self.dataset_str == 'cifar100':
             (_, _), (x_test, y_test) = cifar100.load_data()
             # filter out aquarium fish
-            indicator = (y_test != 6).reshape(y_test.shape[0])
-            return x_test[indicator, :, :, :]
-        else:
-            assert False
+            indicator = (y_test != AQUARIUM_FISH_Y).reshape(y_test.shape[0])
+            x_test = x_test[indicator, :, :, :]
         return x_test
 
     def get_y(self):
@@ -168,10 +170,8 @@ class ImageDataset(Dataset):
         elif self.dataset_str == 'cifar100':
             (_, _), (_, y_test) = cifar100.load_data()
             # filter out aquarium fish
-            indicator = (y_test != 6).reshape(y_test.shape[0])
-            return y_test[indicator, :]
-        else:
-            assert False
+            indicator = (y_test != AQUARIUM_FISH_Y).reshape(y_test.shape[0])
+            y_test = y_test[indicator, :]
         return y_test.transpose().tolist()[0]
 
 
@@ -191,10 +191,10 @@ def train_neural_network(int_labels, batch_size, num_epochs, dataset_str, verbos
     else:
         (x_train, y_train), (x_test, y_test) = cifar100.load_data()
         # filter out aquarium fish
-        indicator = (y_train != 6).reshape(y_train.shape[0])
+        indicator = (y_train != AQUARIUM_FISH_Y).reshape(y_train.shape[0])
         x_train = x_train[indicator, :, :, :]
         y_train = y_train[indicator, :]
-        indicator = (y_test != 6).reshape(y_test.shape[0])
+        indicator = (y_test != AQUARIUM_FISH_Y).reshape(y_test.shape[0])
         x_test = x_test[indicator, :, :, :]
         y_test = y_test[indicator, :]
 
@@ -320,7 +320,7 @@ def binary_to_ints(binary):
 
 def sample_classes(p, k):
     int_labels = sample(range(p), k)
-    while p == 100 and 6 in int_labels:
+    while p == 100 and AQUARIUM_FISH_Y in int_labels:
         int_labels = sample(range(p), k)
     return sorted(int_labels)
 
