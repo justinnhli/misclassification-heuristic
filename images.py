@@ -24,6 +24,22 @@ AQUARIUM_FISH_Y = 5
 AQUARIUM_FISH = 'aquarium fish'
 
 
+def load_cifar10():
+    return cifar10.load_data()
+
+
+def load_cifar100():
+    (x_train, y_train), (x_test, y_test) = cifar100.load_data()
+    # filter out aquarium fish
+    indicator = (y_train != AQUARIUM_FISH_Y).reshape(y_train.shape[0])
+    x_train = x_train[indicator, :, :, :]
+    y_train = y_train[indicator, :]
+    indicator = (y_test != AQUARIUM_FISH_Y).reshape(y_test.shape[0])
+    x_test = x_test[indicator, :, :, :]
+    y_test = y_test[indicator, :]
+    return ((x_train, y_train), (x_test, y_test))
+
+
 class ImageUtils(DomainUtils):
 
     def __init__(self, dataset_str):
@@ -160,22 +176,16 @@ class ImageDataset(Dataset):
 
     def get_x(self):
         if self.dataset_str == 'cifar10':
-            (_, _), (x_test, _) = cifar10.load_data()
+            (_, _), (x_test, _) = load_cifar10()
         elif self.dataset_str == 'cifar100':
-            (_, _), (x_test, y_test) = cifar100.load_data()
-            # filter out aquarium fish
-            indicator = (y_test != AQUARIUM_FISH_Y).reshape(y_test.shape[0])
-            x_test = x_test[indicator, :, :, :]
+            (_, _), (x_test, _) = load_cifar100()
         return x_test
 
     def get_y(self):
         if self.dataset_str == 'cifar10':
-            (_, _), (_, y_test) = cifar10.load_data()
+            (_, _), (_, y_test) = load_cifar10()
         elif self.dataset_str == 'cifar100':
-            (_, _), (_, y_test) = cifar100.load_data()
-            # filter out aquarium fish
-            indicator = (y_test != AQUARIUM_FISH_Y).reshape(y_test.shape[0])
-            y_test = y_test[indicator, :]
+            (_, _), (_, y_test) = load_cifar100()
         return y_test.transpose().tolist()[0]
 
 
@@ -191,16 +201,9 @@ def train_neural_network(int_labels, batch_size, num_epochs, dataset_str, verbos
 
     # load the data
     if dataset_str == 'cifar10':
-        (x_train, y_train), (x_test, y_test) = cifar10.load_data()
+        (x_train, y_train), (x_test, y_test) = load_cifar10()
     else:
-        (x_train, y_train), (x_test, y_test) = cifar100.load_data()
-        # filter out aquarium fish
-        indicator = (y_train != AQUARIUM_FISH_Y).reshape(y_train.shape[0])
-        x_train = x_train[indicator, :, :, :]
-        y_train = y_train[indicator, :]
-        indicator = (y_test != AQUARIUM_FISH_Y).reshape(y_test.shape[0])
-        x_test = x_test[indicator, :, :, :]
-        y_test = y_test[indicator, :]
+        (x_train, y_train), (x_test, y_test) = load_cifar100()
 
     # remove unused labels
     label_filter = np.in1d(y_train, int_labels)
