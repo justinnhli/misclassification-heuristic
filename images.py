@@ -3,6 +3,7 @@
 import re
 from argparse import ArgumentParser
 from collections import defaultdict
+from datetime import datetime
 from os import mkdir
 from os.path import basename, dirname, isdir, realpath, join as join_path, exists as file_exists
 from random import sample
@@ -363,12 +364,21 @@ def main():
     arg_parser.add_argument('--num-epochs', type=int, default=200, help='number of epochs to run')
     arg_parser.add_argument('--verbose', action='store_true', help='show animated progress bar')
     arg_parser.add_argument('--checkpoint', action='store_true', help='store snapshots of the network at every epoch')
+    arg_parser.add_argument('--directory', action='store', default=datetime.now().isoformat(), help='output directory')
     args = arg_parser.parse_args()
     if args.dataset == 'cifar10':
         int_labels = sample_classes(10, args.num_labels)
     elif args.dataset == 'cifar100':
         int_labels = sample_classes(100, args.num_labels)
-    train_neural_network(int_labels, args.batch_size, args.num_epochs, args.dataset, verbose=args.verbose, checkpoint=args.checkpoint)
+    train_neural_network(
+        int_labels,
+        args.batch_size,
+        args.num_epochs,
+        args.dataset,
+        output_path=args.directory,
+        verbose=args.verbose,
+        checkpoint=args.checkpoint,
+    )
 
 
 if __name__ == '__main__':
