@@ -3,17 +3,17 @@
 import re
 from argparse import ArgumentParser
 from collections import defaultdict
-from random import sample
 from os import mkdir
 from os.path import basename, dirname, isdir, realpath, join as join_path, exists as file_exists
+from random import sample
 
 import numpy as np
-from keras.optimizers import rmsprop
 from keras.datasets import cifar10, cifar100
-from keras.preprocessing.image import ImageDataGenerator
-from keras.models import load_model, Sequential
-from keras.layers import Dense, Dropout, Activation, Flatten
 from keras.layers import Conv2D, MaxPooling2D
+from keras.layers import Dense, Dropout, Activation, Flatten
+from keras.models import load_model, Sequential
+from keras.optimizers import rmsprop
+from keras.preprocessing.image import ImageDataGenerator
 from keras.utils import to_categorical
 
 from classifiers import DomainUtils, Classifier, Dataset
