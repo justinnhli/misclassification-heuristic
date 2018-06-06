@@ -14,7 +14,7 @@ def main():
         ','.join(
             '"{}"'.format(''.join(str(n) for n in sorted(labels)))
             for labels in powerset(range(10))
-            if labels != tuple()
+            if 2 <= len(labels) <= 9
         ) + ']'
     )
 

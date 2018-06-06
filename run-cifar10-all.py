@@ -10,7 +10,7 @@ def main():
     train_neural_network(
         int_labels,
         batch_size=32,
-        num_epochs=2,
+        num_epochs=200,
         dataset_str='cifar10',
         output_path='cifar10-all',
         verbose=False,
