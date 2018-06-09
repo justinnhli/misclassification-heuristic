@@ -1,6 +1,11 @@
 **/*.hdf5
+
+**/*.dataset
+
 **/*.predictions
 **/*.regrets
 **/*.summary
+
 **/*.tribulation
+
 **/pbs-*
