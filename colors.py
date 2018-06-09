@@ -2,7 +2,7 @@
 
 import re
 from argparse import ArgumentParser
-from os.path import basename, dirname, expanduser, join as join_path, realpath, splitext
+from os.path import basename, dirname, exists as file_exists, expanduser, join as join_path, realpath, splitext
 from random import seed as set_seed, random, randrange
 
 from classifiers import DomainUtils, Classifier, Dataset, RegretTrial
@@ -181,6 +181,7 @@ class ColorDataset(Dataset):
         self.x = None
         self.y = None
         self.labels = None
+        self.load_cache()
 
     def get_persistent_id(self):
         return 's{}n{}k{}'.format(self.seed, self.size, self.num_colors)
@@ -193,12 +194,38 @@ class ColorDataset(Dataset):
     def get_y(self):
         if self.y is None:
             self.y = self.classifier.classify(self.get_x())
+            self.cache()
         return self.y
 
     def get_labels(self):
         if self.labels is None:
-            self.labels = self.label_map.get_lable(self.get_y())
+            self.labels = self.label_map.get_label(self.get_y())
         return self.labels
+
+    def cache(self):
+        with open(self.get_cache_file(), 'w') as fd:
+            for x, y in zip(self.x, self.y):
+                fd.write('{} {} {} {}\n'.format(
+                    x.r,
+                    x.g,
+                    x.b,
+                    y,
+                ))
+
+    def load_cache(self):
+        if file_exists(self.get_cache_file()):
+            with open(self.get_cache_file()) as fd:
+                self.x = []
+                self.y = []
+                for line in fd.readlines():
+                    r, g, b, y = (int(n) for n in line.strip().split())
+                    self.x.append(Color(r, g, b))
+                    self.y.append(y)
+            return True
+        return False
+
+    def get_cache_file(self):
+        return 'colors/' + self.get_persistent_id() + '.dataset'
 
     def _random_colors(self):
         set_seed(self.seed)
