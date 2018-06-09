@@ -92,14 +92,13 @@ class ColorUtils(DomainUtils):
 
 class NearestCentroid(Classifier):
 
-    def __init__(self, centroids, label_map):
+    def __init__(self, centroids):
         """Constructor for a nearest centroid classifier
 
         Arguments:
             centroids ([Color]): the centroid colors
         """
         self.centroids = centroids
-        self.label_map = label_map
 
     def get_persistent_id(self):
         """Get a persistent (string) id
@@ -170,7 +169,7 @@ class ColorDataset(Dataset):
         self.seed = random_seed
         self.num_colors = num_colors
         self.label_map = label_map
-        self.classifier = NearestCentroid(CENTROIDS[:self.num_colors], self.label_map)
+        self.classifier = NearestCentroid(CENTROIDS[:self.num_colors])
         self.x = None
         self.y = None
         self.labels = None
@@ -213,10 +212,7 @@ def from_file(filepath):
     num_samples = int(dataset_match.group('n'))
     num_new_colors = int(dataset_match.group('k'))
     # create classifier, dataset, and regret trial
-    classifier = NearestCentroid(
-        CENTROIDS[:num_old_colors],
-        ColorUtils(CENTROIDS[:num_old_colors]),
-    )
+    classifier = NearestCentroid(CENTROIDS[:num_old_colors])
     dataset = ColorDataset(
         num_samples,
         random_seed,
@@ -252,10 +248,7 @@ def main():
         random_seed = random()
 
     # create classifier
-    classifier = NearestCentroid(
-        CENTROIDS[:args.num_old_labels],
-        ColorUtils(CENTROIDS[:args.num_old_labels]),
-    )
+    classifier = NearestCentroid(CENTROIDS[:args.num_old_labels])
 
     # create regret testing data (new labels)
     dataset = ColorDataset(
