@@ -6,6 +6,7 @@ from os.path import basename, dirname, expanduser, join as join_path, realpath, 
 from random import seed as set_seed, random, randrange
 
 from classifiers import DomainUtils, Classifier, Dataset, RegretTrial
+from kd_tree import KD_Tree
 
 DIRECTORY = dirname(realpath(__file__))
 DIRECTORY = realpath(expanduser('~/git/aaai2018/color-code'))
@@ -37,6 +38,12 @@ class Color:
 
     def __sub__(self, other):
         return abs(self.r - other.r) + abs(self.g - other.g) + abs(self.b - other.b)
+
+    def __len__(self):
+        return 3
+
+    def __getitem__(self, index):
+        return [self.r, self.g, self.b][index]
 
     def to_hex(self):
         return '#{:02x}{:02x}{:02x}'.format(self.r, self.g, self.b).upper()
@@ -99,6 +106,8 @@ class NearestCentroid(Classifier):
             centroids ([Color]): the centroid colors
         """
         self.centroids = centroids
+        self.inverse = {centroid:index for index, centroid in enumerate(self.centroids)}
+        self.kd_tree = KD_Tree(self.centroids)
 
     def get_persistent_id(self):
         """Get a persistent (string) id
@@ -128,11 +137,10 @@ class NearestCentroid(Classifier):
         """
         ys = []
         for x in xs:
-            closest_index = min(
-                range(len(self.centroids)),
-                key=(lambda k, x=x: abs(x - self.centroids[k])),
-            )
-            ys.append(closest_index)
+            # if multiple nearest, just take one randomly
+            # this is extremely rare, so it shouldn't affect the data
+            nearest = self.kd_tree.find_nearest_neighbors(x)[0].pop()
+            ys.append(self.inverse[nearest])
         return ys
 
     def to_file(self, filepath):
