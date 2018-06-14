@@ -281,7 +281,6 @@ class RegretTrial:
         return mean(
             self.label_mean_regret_scaled(new_label)
             for new_label in self.new_ys()
-            if new_label in self.regrets
         )
 
     def mean_regret(self):
@@ -289,7 +288,6 @@ class RegretTrial:
         return mean(
             self.label_mean_regret(new_label)
             for new_label in self.new_ys()
-            if new_label in self.regrets
         )
 
     def get_summary_file(self):
