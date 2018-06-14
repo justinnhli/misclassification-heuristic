@@ -112,7 +112,7 @@ class NeuralNetwork(Classifier):
     @property
     def model(self):
         if self._model is None:
-            self._model = load_model(filepath)
+            self._model = load_model(self.filepath)
         return self._model
 
     def get_persistent_id(self):
