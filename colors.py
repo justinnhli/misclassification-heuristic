@@ -154,22 +154,6 @@ class NearestCentroid(Classifier):
                 line = '{}\t{}\n'.format(centroid.to_hex(), centroid.name)
                 fd.write(line)
 
-    @classmethod
-    def from_file(cls, filepath):
-        """Create a classifier from file
-
-        Arguments:
-            filepath (str): The file to load from
-        """
-        centroids = []
-        with open(filepath) as fd:
-            for line in fd.readlines():
-                line = line.strip()
-                hex_code, name = line.split('\t')
-                centroids.append(Color.from_hex(hex_code, name))
-        return cls(centroids, ColorUtils(centroids))
-
-
 class ColorDataset(Dataset):
 
     def __init__(self, size, random_seed, num_colors, label_map):
