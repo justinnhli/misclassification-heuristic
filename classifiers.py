@@ -253,7 +253,7 @@ class RegretTrial:
         # count of everything whose true label is new_label
         num_positive = sum(true_labels.get(new_label, 0) for true_labels in summary.values())
         # count of everything whose true and predicted label is both new_label
-        num_correct = summary[new_label][new_label]
+        num_correct = summary[new_label].get(new_label, 0)
         return num_correct / num_positive
 
     def label_random_regret(self, new_label):
