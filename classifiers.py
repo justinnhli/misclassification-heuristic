@@ -246,10 +246,13 @@ class RegretTrial:
     def label_max_regret(self, new_label):
         return self.regrets[new_label]['max_regret']
 
+    def label_mean_regret_scaled(self, new_label):
+        return self.label_mean_regret(new_label) / self.label_max_regret(new_label)
+
     def mean_regret_scaled(self):
         """Calculate the mean scaled regret for all new labels that have data."""
         return mean(
-            self.label_mean_regret(new_label) / self.label_max_regret(new_label)
+            self.label_mean_regret_scaled(new_label)
             for new_label in self.new_ys()
             if new_label in self.regrets
         )
