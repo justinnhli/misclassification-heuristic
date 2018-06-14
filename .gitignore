@@ -6,6 +6,8 @@
 **/*.regrets
 **/*.summary
 
+**/*.trial_df
+
 **/*.tribulation
 
 **/pbs-*
