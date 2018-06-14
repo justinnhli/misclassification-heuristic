@@ -6,6 +6,8 @@ from os.path import dirname, realpath, exists as file_exists, join as join_path
 from random import shuffle
 from statistics import mean
 
+import numpy as np
+
 FILE_DIR = dirname(realpath(__file__))
 
 
@@ -217,17 +219,42 @@ class RegretTrial:
         # lambda sorts by distance, then by label name
         return sorted(distances, key=(lambda kv: list(reversed(kv))))
 
-    def label_accuracy(self, old_label):
-        # FIXME this is incorrect; need to separate accuracy and precision, I think
-        summary = self.load_summary()
-        total_predicted = sum(summary[old_label])
-        correct_predicted = summary[old_label].get(old_label, 0)
-        # FIXME definite hack
-        # unsure why a classifier would end up with no data in a label
-        if total_predicted == 0:
-            return 0
+    def label_true_positive_init(self, old_label):
+        if hasattr(self.classifier, 'label_true_positive_init'):
+            return self.classifier.label_true_positive_init(old_label)
         else:
-            return correct_predicted / total_predicted
+            return np.nan
+
+    def true_positive_init(self):
+        if hasattr(self.classifier, 'true_positive_init'):
+            return self.classifier.true_positive_init()
+        else:
+            return np.nan
+
+    def error_rate_init(self):
+        if hasattr(self.classifier, 'error_rate_init'):
+            return self.classifier.error_rate_init()
+        else:
+            return np.nan
+
+    def true_positive_update(self):
+        summary = self.load_summary()
+        # count of everything whose true label is new_label
+        num_total = sum(sum(true_classes.values()) for true_classes in summary.values())
+        # count of everything whose true and predicted label is both new_label
+        num_correct = sum(
+            summary[cls].get(cls, 0)
+            for cls in summary.keys()
+        )
+        return num_correct / num_total
+
+    def label_true_positive_update(self, new_label):
+        summary = self.load_summary()
+        # count of everything whose true label is new_label
+        num_positive = sum(true_labels.get(new_label, 0) for true_labels in summary.values())
+        # count of everything whose true and predicted label is both new_label
+        num_correct = summary[new_label][new_label]
+        return num_correct / num_positive
 
     def label_random_regret(self, new_label):
         misclassifications = self.label_misclassification_order(new_label)
@@ -264,9 +291,6 @@ class RegretTrial:
             for new_label in self.new_ys()
             if new_label in self.regrets
         )
-
-    def mean_accuracy(self):
-        return mean(self.label_accuracy(old_label) for old_label in self.old_ys())
 
     def get_summary_file(self):
         return join_path(self.get_data_path(), self.get_persistent_id() + '.summary')

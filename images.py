@@ -108,6 +108,7 @@ class NeuralNetwork(Classifier):
         self.int_labels = binary_to_ints(int(match.group(2)))
         self.batch_size = int(match.group(3))
         self.num_epochs = int(match.group(4))
+        self._test_predictions = None
 
     @property
     def model(self):
@@ -135,6 +136,43 @@ class NeuralNetwork(Classifier):
             [int]: the integer labels
         """
         return self.int_labels
+
+    def label_true_positive_init(self, old_label):
+        if self.dataset_str == 'cifar10':
+            (_, _), (x_test, y_test) = load_cifar10()
+        else:
+            (_, _), (x_test, y_test) = load_cifar100()
+        if self._test_predictions is None:
+            self._test_predictions = self.classify(x_test)
+        y_predict = self._test_predictions
+        num_correct = 0
+        num_positive = 0
+        for actual, predicted in zip(y_test.T[0], y_predict):
+            if actual == old_label:
+                if actual == predicted:
+                    num_correct += 1
+                num_positive += 1
+        return num_correct / num_positive
+
+    def true_positive_init(self):
+        if self.dataset_str == 'cifar10':
+            (_, _), (x_test, y_test) = load_cifar10()
+        else:
+            (_, _), (x_test, y_test) = load_cifar100()
+        if self._test_predictions is None:
+            self._test_predictions = self.classify(x_test)
+        y_predict = self._test_predictions
+        num_correct = 0
+        num_positive = 0
+        for actual, predicted in zip(y_test.T[0], y_predict):
+            if actual in self.get_ys():
+                if actual == predicted:
+                    num_correct += 1
+                num_positive += 1
+        return num_correct / num_positive
+
+    def error_rate_init(self):
+        return 1 - self.true_positive_init()
 
     def classify(self, xs):
         """Classify the data
