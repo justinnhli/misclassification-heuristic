@@ -73,8 +73,8 @@ CENTROIDS = read_colors()
 
 class ColorUtils(DomainUtils):
 
-    def __init__(self, centroids):
-        self.centroids = centroids
+    def __init__(self, num_centroids):
+        self.centroids = CENTROIDS[:num_centroids]
 
     def class_to_color(self, y):
         return self.centroids[y]
@@ -252,11 +252,11 @@ def from_file(filepath):
         num_samples,
         random_seed,
         num_new_colors,
-        ColorUtils(CENTROIDS[:num_new_colors]),
+        ColorUtils(num_new_colors),
     )
     return RegretTrial(
         classifier,
-        ColorUtils(CENTROIDS[:num_new_colors]),
+        ColorUtils(num_new_colors),
         dataset,
         path_prefix=path_prefix,
     )
@@ -290,13 +290,13 @@ def main():
         args.dataset_size,
         random_seed,
         args.num_new_labels,
-        ColorUtils(CENTROIDS[:args.num_new_labels]),
+        ColorUtils(args.num_new_labels),
     )
 
     # create regret trial
     RegretTrial(
         classifier,
-        ColorUtils(CENTROIDS[:args.num_new_labels]),
+        ColorUtils(args.num_new_labels),
         dataset,
         path_prefix='colors',
     )
