@@ -5,7 +5,7 @@ from argparse import ArgumentParser
 from collections import defaultdict
 from datetime import datetime
 from os import mkdir
-from os.path import basename, dirname, isdir, realpath, join as join_path, exists as file_exists
+from os.path import basename, dirname, isdir, realpath, join as join_path, exists as file_exists, splitext, expanduser
 from random import sample
 
 import numpy as np
@@ -18,7 +18,7 @@ from keras.optimizers import rmsprop
 from keras.preprocessing.image import ImageDataGenerator
 from keras.utils import to_categorical
 
-from classifiers import DomainUtils, Classifier, Dataset
+from classifiers import DomainUtils, Classifier, Dataset, RegretTrial
 
 FILE_DIR = dirname(realpath(__file__))
 
@@ -230,8 +230,16 @@ class ImageDataset(Dataset):
 
 
 def from_file(filepath):
-    pass # FIXME
-
+    filepath = realpath(expanduser(filepath))
+    path_prefix = dirname(filepath)
+    filename = splitext(basename(filepath))[0]
+    classifier_id, dataset_id = filename.split('_', maxsplit=1)
+    hdf5_file = join_path(dirname(filepath), classifier_id + '.hdf5')
+    assert file_exists(hdf5_file), 'Cannot find neural network file for {}'.format(classifier_id)
+    classifier = NeuralNetwork(hdf5_file)
+    utils = ImageUtils(dataset_id)
+    dataset = ImageDataset(dataset_id)
+    return RegretTrial(classifier, utils, dataset, path_prefix=path_prefix)
 
 def train_neural_network(int_labels, batch_size, num_epochs, dataset_str, verbose=False, output_path='images', checkpoint=False):
     if file_exists(output_path):
