@@ -254,7 +254,10 @@ class RegretTrial:
         num_positive = sum(true_labels.get(new_label, 0) for true_labels in summary.values())
         # count of everything whose true and predicted label is both new_label
         num_correct = summary[new_label].get(new_label, 0)
-        return num_correct / num_positive
+        if num_positive == 0:
+            return 1 # 100% true positive rate (over am empty dataset)
+        else:
+            return num_correct / num_positive
 
     def label_random_regret(self, new_label):
         misclassifications = self.label_misclassification_order(new_label)
@@ -274,7 +277,10 @@ class RegretTrial:
         return self.regrets[new_label]['max_regret']
 
     def label_mean_regret_scaled(self, new_label):
-        return self.label_mean_regret(new_label) / self.label_max_regret(new_label)
+        if self.label_max_regret(new_label) == 0:
+            return 0
+        else:
+            return self.label_mean_regret(new_label) / self.label_max_regret(new_label)
 
     def mean_regret_scaled(self):
         """Calculate the mean scaled regret for all new labels that have data."""
