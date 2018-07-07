@@ -9,8 +9,8 @@ from classifiers import DomainUtils, Classifier, Dataset, RegretTrial
 from kd_tree import KD_Tree
 
 DIRECTORY = dirname(realpath(__file__))
-DIRECTORY = realpath(expanduser('~/git/aaai2018/color-code'))
-COLOR_NAMES_FILE = join_path(DIRECTORY, 'color-centroids.tsv')
+#DIRECTORY = realpath(expanduser('~/git/aaai2018/color-code'))
+COLOR_NAMES_FILE = join_path(DIRECTORY, 'color-data/color-centroids.tsv')
 
 
 class Color:
