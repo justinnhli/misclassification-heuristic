@@ -9,7 +9,7 @@ from itertools import product
 from textwrap import dedent
 
 
-class PBS_Job:
+class PBSJob:
 
     # For more details, See the \`qsub\` manpage, or
     # http://docs.adaptivecomputing.com/torque/4-1-3/Content/topics/commands/qsub.htm
@@ -33,7 +33,8 @@ class PBS_Job:
         else:
             self.queue = queue
         self.venv = venv
-        self.resources = 'nodes=n006.cluster.com:ppn=1,mem=1000mb,file=4gb' # FIXME
+        # these are default for now; future changes may allow on-the-fly allocation
+        self.resources = 'nodes=n006.cluster.com:ppn=1,mem=1000mb,file=4gb'
 
     def _generate_commands(self):
         commands = self.commands
@@ -42,7 +43,7 @@ class PBS_Job:
                 'source "/home/justinnhli/.venv/{}/bin/activate"'.format(self.venv),
             ]
             suffixes = [
-                'deactivate'
+                'deactivate',
             ]
             commands = prefixes + commands + suffixes
         return '\n'.join(commands)
@@ -51,8 +52,8 @@ class PBS_Job:
         variables = ','.join('{}={}'.format(k, v) for k, v in args)
         if kwargs:
             variables += ',' + ','.join('{}={}'.format(k, v) for k, v in sorted(kwargs.items()))
-        return PBS_Job.TEMPLATE.format(
-            name=('pbs_' + self.name),
+        return PBSJob.TEMPLATE.format(
+            name='pbs_{}_{}'.format(self.name, variables),
             queue=self.queue,
             resources=self.resources,
             variables=variables,
@@ -98,36 +99,8 @@ def parse_var(arg, force_list=True):
     return var, vals
 
 
-def parse_args():
-    variables = []
-    command = None
-    kwargs = {}
-    last_arg_index = 0
-    for i, arg in enumerate(sys.argv[1:], start=1):
-        if arg in ('-h', '--help'):
-            print_help()
-        elif arg.startswith('--'):
-            if arg == '--':
-                last_arg_index = i
-                break
-            var, vals = parse_var(arg)
-            variables.append([var, vals])
-        elif arg.startswith('-'):
-            key, val = parse_var(arg, force_list=False)
-            kwargs[key] = val
-        else:
-            break
-        last_arg_index = i
-    command = ' '.join(sys.argv[last_arg_index + 1:])
-    return variables, command, kwargs
-
-
-def main():
-    variables, command, kwargs = parse_args()
-    # print script
-    job_name = 'from_cmd_' + datetime.now().strftime('%Y%m%d%H%M%S')
-    commands = ['cd "$PBS_O_WORKDIR"', command]
-    pbs_job = PBS_Job(job_name, commands, **kwargs)
+def run_cli(job_name, variables, commands, **kwargs):
+    pbs_job = PBSJob(job_name, commands, **kwargs)
     print(pbs_job.generate_script())
     print()
     print(40 * '-')
@@ -159,6 +132,38 @@ def main():
         exit()
     if response.lower().startswith('y'):
         pbs_job.run_all(*variables)
+
+
+def parse_args():
+    variables = []
+    command = None
+    kwargs = {}
+    last_arg_index = 0
+    for i, arg in enumerate(sys.argv[1:], start=1):
+        if arg in ('-h', '--help'):
+            print_help()
+        elif arg.startswith('--'):
+            if arg == '--':
+                last_arg_index = i
+                break
+            var, vals = parse_var(arg)
+            variables.append([var, vals])
+        elif arg.startswith('-'):
+            key, val = parse_var(arg, force_list=False)
+            kwargs[key] = val
+        else:
+            break
+        last_arg_index = i
+    command = ' '.join(sys.argv[last_arg_index + 1:])
+    return variables, command, kwargs
+
+
+def main():
+    variables, command, kwargs = parse_args()
+    # print script
+    job_name = 'from_cmd_' + datetime.now().strftime('%Y%m%d%H%M%S')
+    commands = ['cd "$PBS_O_WORKDIR"', command]
+    run_cli(job_name, variables, commands, **kwargs)
 
 
 if __name__ == '__main__':
