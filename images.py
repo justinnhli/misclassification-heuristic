@@ -43,7 +43,7 @@ def prepare_data(x_train, y_train, x_test, y_test, int_labels):
 
 
 def load_cifar10(int_labels=None):
-    (x_train, y_train), (x_test, y_test) = load_cifar10()
+    (x_train, y_train), (x_test, y_test) = cifar10.load_data()
     x_train, y_train, x_test, y_test = prepare_data(x_train, y_train, x_test, y_test, int_labels)
     return ((x_train, y_train), (x_test, y_test))
 
