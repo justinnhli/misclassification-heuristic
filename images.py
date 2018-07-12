@@ -44,7 +44,7 @@ def prepare_data(x_train, y_train, x_test, y_test, int_labels):
 
 def load_cifar10(int_labels=None):
     (x_train, y_train), (x_test, y_test) = cifar10.load_data()
-    x_train, y_train, x_test, y_test = prepare_data(x_train, y_train, x_test, y_test, int_labels)
+    (x_train, y_train), (x_test, y_test) = prepare_data(x_train, y_train, x_test, y_test, int_labels)
     return ((x_train, y_train), (x_test, y_test))
 
 
@@ -54,7 +54,7 @@ def load_cifar100(int_labels=None):
     if int_labels is None:
         int_labels = list(range(100))
     int_labels = list(i for i in range(100) if i != AQUARIUM_FISH_Y)
-    x_train, y_train, x_test, y_test = prepare_data(x_train, y_train, x_test, y_test, int_labels)
+    (x_train, y_train), (x_test, y_test) = prepare_data(x_train, y_train, x_test, y_test, int_labels)
     return ((x_train, y_train), (x_test, y_test))
 
 
