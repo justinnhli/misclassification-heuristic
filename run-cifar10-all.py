@@ -34,8 +34,6 @@ def generate_jobs():
 
 
 def run_job(int_labels):
-    print(int_labels)
-    exit()
     directory = 'cifar10-threes-history-new'
     nn = train_neural_network(
         int_labels,
