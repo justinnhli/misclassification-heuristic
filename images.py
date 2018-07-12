@@ -13,6 +13,7 @@ from keras.callbacks import ModelCheckpoint
 from keras.datasets import cifar10, cifar100
 from keras.layers import Conv2D, MaxPooling2D
 from keras.layers import Dense, Dropout, Activation, Flatten
+from keras.metrics import categorical_accuracy
 from keras.models import load_model, Sequential
 from keras.optimizers import rmsprop
 from keras.preprocessing.image import ImageDataGenerator
@@ -253,19 +254,15 @@ def train_neural_network(int_labels, batch_size, num_epochs, dataset_str, verbos
     else:
         (x_train, y_train), (x_test, y_test) = load_cifar100()
 
+    num_classes = len(np.unique(y_test))
+
     # remove unused labels
-    label_filter = np.in1d(y_train, int_labels)
+    label_filter = np.isin(y_train, int_labels).T[0]
     x_train = x_train[label_filter]
     y_train = y_train[label_filter]
-    label_filter = np.in1d(y_test, int_labels)
+    label_filter = np.isin(y_test, int_labels).T[0]
     x_test = x_test[label_filter]
     y_test = y_test[label_filter]
-
-    # map original labels to range(num_labels)
-    mapping = {label: i for i, label in enumerate(int_labels)}
-    mapping_fn = np.vectorize(lambda old: mapping[old])
-    y_train = mapping_fn(y_train)
-    y_test = mapping_fn(y_test)
 
     # normalize dataset to [0, 1]
     x_train = x_train.astype('float32')
@@ -273,9 +270,9 @@ def train_neural_network(int_labels, batch_size, num_epochs, dataset_str, verbos
     x_train /= 255
     x_test /= 255
 
-    # convert class vectors to binary class matrices.
-    y_train = to_categorical(y_train, len(int_labels))
-    y_test = to_categorical(y_test, len(int_labels))
+    # convert class vectors to one-hot encoding
+    y_train = to_categorical(y_train, num_classes)
+    y_test = to_categorical(y_test, num_classes)
 
     # this will do preprocessing and real time data augmentation:
     datagen = ImageDataGenerator(
@@ -320,12 +317,16 @@ def train_neural_network(int_labels, batch_size, num_epochs, dataset_str, verbos
     model.add(Dense(512))
     model.add(Activation('relu'))
     model.add(Dropout(0.5))
-    model.add(Dense(len(int_labels)))
+    model.add(Dense(num_classes))
     model.add(Activation('softmax'))
     # initiate RMSprop optimizer
     optimizer = rmsprop(lr=0.0001, decay=1e-6)
     # train the model using RMSprop
-    model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
+    model.compile(
+        loss='categorical_crossentropy',
+        optimizer=optimizer,
+        metrics=[categorical_accuracy],
+    )
     # other arguments
     kwargs = {}
     # verbosity (show progress bar)
