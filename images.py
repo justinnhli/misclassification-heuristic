@@ -406,19 +406,20 @@ def sample_classes(p, k):
 def main():
     arg_parser = ArgumentParser()
     arg_parser.add_argument('--dataset', default='cifar10', choices=['cifar10', 'cifar100'], help='the dataset to use')
-    arg_parser.add_argument('--num-labels', type=int, default=5, help='number of labels to use')
+    arg_parser.add_argument('--labels', action='append', help='labels to use')
     arg_parser.add_argument('--batch-size', type=int, default=32, help='size of each batch')
     arg_parser.add_argument('--num-epochs', type=int, default=200, help='number of epochs to run')
     arg_parser.add_argument('--verbose', action='store_true', help='show animated progress bar')
     arg_parser.add_argument('--checkpoint', action='store_true', help='store snapshots of the network at every epoch')
     arg_parser.add_argument('--directory', action='store', default=datetime.now().isoformat(), help='output directory')
     args = arg_parser.parse_args()
+    args.int_labels = sorted(set(args.int_labels))
     if args.dataset == 'cifar10':
-        int_labels = sample_classes(10, args.num_labels)
+        assert all(0 <= k < 10 for k in args.int_labels)
     elif args.dataset == 'cifar100':
-        int_labels = sample_classes(100, args.num_labels)
+        assert all(0 <= k < 100 for k in args.int_labels)
     train_neural_network(
-        int_labels,
+        args.int_labels,
         args.batch_size,
         args.num_epochs,
         args.dataset,
