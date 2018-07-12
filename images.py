@@ -27,19 +27,34 @@ AQUARIUM_FISH_Y = 5
 AQUARIUM_FISH = 'aquarium fish'
 
 
-def load_cifar10():
-    return cifar10.load_data()
+def prepare_data(x_train, y_train, x_test, y_test, int_labels):
+    # remove unused labels
+    if int_labels is not None:
+        label_filter = np.isin(y_train, int_labels).T[0]
+        x_train = x_train[label_filter]
+        y_train = y_train[label_filter]
+        label_filter = np.isin(y_test, int_labels).T[0]
+        x_test = x_test[label_filter]
+        y_test = y_test[label_filter]
+    # normalize RGB to [0, 1]
+    x_train = x_train.astype('float32') / 255
+    x_test = x_test.astype('float32') / 255
+    return ((x_train, y_train), (x_test, y_test))
 
 
-def load_cifar100():
+def load_cifar10(int_labels=None):
+    (x_train, y_train), (x_test, y_test) = load_cifar10()
+    x_train, y_train, x_test, y_test = prepare_data(x_train, y_train, x_test, y_test, int_labels)
+    return ((x_train, y_train), (x_test, y_test))
+
+
+def load_cifar100(int_labels=None):
     (x_train, y_train), (x_test, y_test) = cifar100.load_data()
     # filter out aquarium fish
-    indicator = (y_train != AQUARIUM_FISH_Y).reshape(y_train.shape[0])
-    x_train = x_train[indicator, :, :, :]
-    y_train = y_train[indicator, :]
-    indicator = (y_test != AQUARIUM_FISH_Y).reshape(y_test.shape[0])
-    x_test = x_test[indicator, :, :, :]
-    y_test = y_test[indicator, :]
+    if int_labels is None:
+        int_labels = list(range(100))
+    int_labels = list(i for i in range(100) if i != AQUARIUM_FISH_Y)
+    x_train, y_train, x_test, y_test = prepare_data(x_train, y_train, x_test, y_test, int_labels)
     return ((x_train, y_train), (x_test, y_test))
 
 
@@ -251,24 +266,10 @@ def train_neural_network(int_labels, batch_size, num_epochs, dataset_str, verbos
     # load the data
     if dataset_str == 'cifar10':
         (x_train, y_train), (x_test, y_test) = load_cifar10()
+        num_classes = 10
     else:
         (x_train, y_train), (x_test, y_test) = load_cifar100()
-
-    num_classes = len(np.unique(y_test))
-
-    # remove unused labels
-    label_filter = np.isin(y_train, int_labels).T[0]
-    x_train = x_train[label_filter]
-    y_train = y_train[label_filter]
-    label_filter = np.isin(y_test, int_labels).T[0]
-    x_test = x_test[label_filter]
-    y_test = y_test[label_filter]
-
-    # normalize dataset to [0, 1]
-    x_train = x_train.astype('float32')
-    x_test = x_test.astype('float32')
-    x_train /= 255
-    x_test /= 255
+        num_classes = 100
 
     # convert class vectors to one-hot encoding
     y_train = to_categorical(y_train, num_classes)
