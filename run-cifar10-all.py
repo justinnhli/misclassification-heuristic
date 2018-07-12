@@ -27,14 +27,16 @@ def generate_jobs():
             '/home/justinnhli/glibc-install/lib/ld-linux-x86-64.so.2',
             '--library-path /home/justinnhli/glibc-install/lib:/home/justinnhli/gcc-install/lib64/:/lib64:/usr/lib64',
             '/home/justinnhli/.venv/misclassification-heuristic/bin/python3',
-            r'run-cifar10-all.py \$labels',
+            r'run-cifar10-all.py "$int_labels"',
         ]),
     ]
     run_cli(job_name, variables, commands, venv='misclassification-heuristic')
 
 
 def run_job(int_labels):
-    directory = 'cifar10-threes-history'
+    print(int_labels)
+    exit()
+    directory = 'cifar10-threes-history-new'
     nn = train_neural_network(
         int_labels,
         batch_size=32,
@@ -64,7 +66,8 @@ def main():
     else:
         error = True
     if error:
-        print(f'Usage: {sys.argv[0]} ( --generate-jobs | [0-9]{3} )')
+        print('Unrecognized arguments: ' + ' '.join(sys.argv))
+        print(f'Usage: {sys.argv[0]} ( --generate-jobs | [0-9]{{3}} )')
         exit(1)
 
 

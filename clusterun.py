@@ -48,19 +48,31 @@ class PBSJob:
             commands = prefixes + commands + suffixes
         return '\n'.join(commands)
 
-    def generate_script(self, *args, **kwargs):
-        variables = ','.join('{}={}'.format(k, v) for k, v in args)
-        if kwargs:
-            variables += ',' + ','.join('{}={}'.format(k, v) for k, v in sorted(kwargs.items()))
+    def generate_script(self, variables=None):
+        """Create a PBS job script.
+
+        Arguments:
+            variables (List[Tuple[str, obj]]): List of (key, value).
+
+        Returns:
+            str: The PBS job script.
+        """
+        if variables is None:
+            variables = []
         return PBSJob.TEMPLATE.format(
-            name='pbs_{}_{}'.format(self.name, variables),
+            name=self.name,
             queue=self.queue,
             resources=self.resources,
-            variables=variables,
+            variables=','.join(f'{key}={value}' for key, value in variables),
             commands=self._generate_commands(),
         )
 
-    def run(self, *args, **kwargs):
+    def run(self, variables):
+        """Create a single job.
+
+        Arguments:
+            variables (List[Tuple[str, obj]]): List of (key, value).
+        """
         qsub_command = ['qsub', '-']
         subprocess.run(
             qsub_command,
@@ -68,39 +80,31 @@ class PBSJob:
             shell=True,
         )
 
-    def run_all(self, *args, **kwargs):
-        keys = [pair[0] for pair in args]
-        keys += sorted(kwargs.keys())
-        space = [pair[1] for pair in args]
-        space += [v for k, v in sorted(kwargs.items())]
+    def run_all(self, variable_space=None):
+        """Create jobs for all variables.
+
+        Arguments:
+            variable_spaces (List[Tuple[str, List[obj]]]): List of (key, values).
+        """
+        if variable_space is None:
+            variable_space = []
+        keys = [pair[0] for key, values in variable_space]
+        space = [pair[1] for key, values in variable_space]
         for values in product(*space):
             self.run(*zip(keys, values))
 
 
-def print_help():
-    message = 'usage: {} [--<var>=<vals> ...] cmd [arg ...]'.format(
-        sys.argv[0]
-    )
-    print(message)
-    exit()
+def run_cli(job_name, variables, commands, queue=None, venv=None):
+    """Preview the job script and prompt for job start.
 
-
-def parse_var(arg, force_list=True):
-    var, vals = arg.split('=', maxsplit=1)
-    var = var[2:].replace('-', '_')
-    if not re.match('^[a-z]([_a-z0-9-]*?[a-z0-9])?$', var):
-        raise ValueError('Invalid variable name: "{}"'.format(var))
-    try:
-        vals = literal_eval(vals)
-    except ValueError:
-        vals = vals
-    if force_list and isinstance(vals, tuple([int, float, str])):
-        vals = [vals]
-    return var, vals
-
-
-def run_cli(job_name, variables, commands, **kwargs):
-    pbs_job = PBSJob(job_name, commands, **kwargs)
+    Arguments:
+        job_name (str): The name of the job.
+        variables (List[Tuple[str, List[obj]]]): List of (key, values).
+        commands (List[str]): Commands to run.
+        queue (str): The queue to submit the jobs to.
+        venv (str): The virtual environment to use.
+    """
+    pbs_job = PBSJob(job_name, commands, queue=queue, venv=venv)
     print(pbs_job.generate_script())
     print()
     print(40 * '-')
@@ -132,6 +136,28 @@ def run_cli(job_name, variables, commands, **kwargs):
         exit()
     if response.lower().startswith('y'):
         pbs_job.run_all(*variables)
+
+
+def print_help():
+    message = 'usage: {} [--<var>=<vals> ...] cmd [arg ...]'.format(
+        sys.argv[0]
+    )
+    print(message)
+    exit()
+
+
+def parse_var(arg, force_list=True):
+    var, vals = arg.split('=', maxsplit=1)
+    var = var[2:].replace('-', '_')
+    if not re.match('^[a-z]([_a-z0-9-]*?[a-z0-9])?$', var):
+        raise ValueError('Invalid variable name: "{}"'.format(var))
+    try:
+        vals = literal_eval(vals)
+    except ValueError:
+        vals = vals
+    if force_list and isinstance(vals, tuple([int, float, str])):
+        vals = [vals]
+    return var, vals
 
 
 def parse_args():
