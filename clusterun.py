@@ -16,7 +16,7 @@ class PBSJob:
     TEMPLATE = dedent('''
         #!/bin/sh
 
-        #PBS -N {name}
+        #PBS -N pbs_{name}
         #PBS -q {queue}
         #PBS -l {resources}
         #PBS -v {variables}
@@ -76,7 +76,7 @@ class PBSJob:
         qsub_command = ['qsub', '-']
         subprocess.run(
             qsub_command,
-            input=self.generate_script(*args, **kwargs).encode('utf-8'),
+            input=self.generate_script(variables).encode('utf-8'),
             shell=True,
         )
 
@@ -88,10 +88,10 @@ class PBSJob:
         """
         if variable_space is None:
             variable_space = []
-        keys = [pair[0] for key, values in variable_space]
-        space = [pair[1] for key, values in variable_space]
+        keys = [key for key, values in variable_space]
+        space = [values for key, values in variable_space]
         for values in product(*space):
-            self.run(*zip(keys, values))
+            self.run(list(zip(keys, values)))
 
 
 def run_cli(job_name, variables, commands, queue=None, venv=None):
@@ -135,7 +135,7 @@ def run_cli(job_name, variables, commands, queue=None, venv=None):
         print()
         exit()
     if response.lower().startswith('y'):
-        pbs_job.run_all(*variables)
+        pbs_job.run_all(variables)
 
 
 def print_help():
