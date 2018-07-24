@@ -257,7 +257,7 @@ def from_file(filepath):
     dataset = ImageDataset(dataset_id)
     return RegretTrial(classifier, utils, dataset, path_prefix=path_prefix)
 
-def train_neural_network(int_labels, batch_size, num_epochs, dataset_str, verbose=False, output_path='images', checkpoint=False):
+def train_neural_network(int_labels, batch_size, num_epochs, dataset_str, verbose=False, output_path='images', checkpoint=0):
     if file_exists(output_path):
         assert isdir(output_path), '"{}" exists but is not a directory'.format(output_path)
     else:
@@ -336,7 +336,7 @@ def train_neural_network(int_labels, batch_size, num_epochs, dataset_str, verbos
     else:
         kwargs['verbose'] = 0
     # save intermediate models at every epoch
-    if checkpoint:
+    if checkpoint > 0:
         kwargs['callbacks'] = [
             ModelCheckpoint(
                 join_path(
@@ -347,7 +347,7 @@ def train_neural_network(int_labels, batch_size, num_epochs, dataset_str, verbos
                         batch_size,
                     ),
                 ),
-                period=1,
+                period=checkpoint,
             ),
         ]
 
