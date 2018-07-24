@@ -201,8 +201,7 @@ class NeuralNetwork(Classifier):
             [int]: the classifications
         """
         y_predict_raw = self.model.predict(xs)
-        y_predict = np.vectorize(lambda l: self.int_labels[l])(np.argmax(y_predict_raw, axis=1)).tolist()
-        return y_predict
+        return list(np.argmax(y_predict_raw, axis=1))
 
     def to_file(self, filepath):
         """Save the classifier to file
