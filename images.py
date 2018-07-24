@@ -371,7 +371,24 @@ def train_neural_network(int_labels, batch_size, num_epochs, dataset_str, verbos
     )
     model.save(filepath)
 
-    return NeuralNetwork(filepath)
+    # list of paths saved
+    if checkpoint > 0:
+        filepaths = [filepath]
+    else:
+        filepaths = [
+            join_path(
+                output_path,
+                '{}-l{}-b{:02d}-e{:03d}.hdf5'.format(
+                    dataset_str,
+                    str(ints_to_binary(int_labels)),
+                    batch_size,
+                    epoch,
+                ),
+            )
+            for epoch in range(0, num_epochs, checkpoint)
+        ]
+
+    return filepaths
 
 
 def ints_to_binary(int_labels):
