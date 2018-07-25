@@ -73,7 +73,7 @@ def main():
         error = True
     if error:
         print('Unrecognized arguments: ' + ' '.join(sys.argv))
-        print(f'Usage: {sys.argv[0]} ( --generate-jobs | [0-9]{{3}} )')
+        print(f'Usage: {sys.argv[0]} ( --generate-jobs | <index> )')
         exit(1)
 
 
