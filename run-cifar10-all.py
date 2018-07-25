@@ -5,9 +5,6 @@ import re
 from itertools import combinations
 
 from clusterun import run_cli
-from images import train_neural_network
-from images import ImageUtils, ImageDataset, NeuralNetwork
-from classifiers import RegretTrial
 
 
 def list_int_labels():
@@ -38,6 +35,9 @@ def generate_jobs():
 
 
 def run_job(start, end):
+    from images import train_neural_network
+    from images import ImageUtils, ImageDataset, NeuralNetwork
+    from classifiers import RegretTrial
     for int_labels in list_int_labels()[start:end]:
         directory = 'cifar10-threes-history-new'
         network_files = train_neural_network(
