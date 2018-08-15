@@ -6,6 +6,8 @@ from itertools import combinations
 
 from clusterun import run_cli
 
+from trial_dataframe import trial_to_dataframe
+
 
 def list_int_labels():
     return [subset for subset in combinations(range(10), 3)]
@@ -58,6 +60,7 @@ def run_job(start, end):
                 path_prefix=directory,
             )
             trial.load_summary()
+            trial_to_dataframe(trial)
 
 
 def main():
