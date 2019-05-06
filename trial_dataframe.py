@@ -107,8 +107,8 @@ def trial_to_dataframe(trial):
                 label_max_regret=label_max_regret,
                 label_mean_regret_scaled=label_mean_regret_scaled,
                 # ranking information
-                heuristic=heuristic_ranks[old_class],
-                heuristic_rank=heuristics[old_class],
+                heuristic_rank=heuristic_ranks[old_class],
+                heuristic=heuristics[old_class],
                 misclassification=misclassifications[old_class],
                 misclassification_rank=misclassification_ranks[old_class],
             ))
@@ -183,7 +183,7 @@ def create_image_tribulation(directory):
     df['neural_network'] = df['trial_id'].apply(
         lambda s: NeuralNetwork(join_path(directory, s.split('_')[0] + '.hdf5'))
     )
-    df['int_labels'] = df['neural_network'].apply(lambda nn: nn.int_labels)
+    df['int_labels'] = df['neural_network'].apply(lambda nn: tuple(nn.int_labels))
     df['batch_size'] = df['neural_network'].apply(lambda nn: nn.batch_size)
     df['num_epochs'] = df['neural_network'].apply(lambda nn: nn.num_epochs)
     del df['neural_network']
