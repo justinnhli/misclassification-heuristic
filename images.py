@@ -4,7 +4,7 @@ import re
 from argparse import ArgumentParser
 from collections import defaultdict
 from datetime import datetime
-from os import mkdir
+from os import makedirs
 from os.path import basename, dirname, isdir, realpath, join as join_path, exists as file_exists, splitext, expanduser
 from random import sample
 
@@ -260,7 +260,7 @@ def train_neural_network(int_labels, batch_size, num_epochs, dataset_str, verbos
     if file_exists(output_path):
         assert isdir(output_path), '"{}" exists but is not a directory'.format(output_path)
     else:
-        mkdir(output_path)
+        makedirs(output_path, exist_ok=True)
 
     # load the data
     if dataset_str == 'cifar10':
