@@ -18,7 +18,7 @@ def list_int_labels():
         while len(numbers) != 3 or tuple(sorted(numbers)) in results:
             numbers = set([rng.randrange(100), rng.randrange(100), rng.randrange(100)])
         results.add(tuple(sorted(numbers)))
-    return sorte(results)
+    return sorted(results)
 
 
 def generate_jobs():
@@ -54,7 +54,7 @@ def run_job(start, end):
             int_labels,
             batch_size=32,
             num_epochs=200,
-            dataset_str='cifar10',
+            dataset_str='cifar100',
             output_path=directory,
             verbose=False,
         )
