@@ -371,7 +371,7 @@ def train_neural_network(int_labels, batch_size, num_epochs, dataset_str, verbos
     model.save(filepath)
 
     # list of paths saved
-    if checkpoint > 0:
+    if checkpoint == 0:
         filepaths = [filepath]
     else:
         filepaths = [
