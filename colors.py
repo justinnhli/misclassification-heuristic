@@ -125,6 +125,9 @@ class NearestCentroid(Classifier):
         """
         return list(range(len(self.centroids)))
 
+    def classify_one(self, x):
+        return self.kd_tree.find_nearest_neighbors(x)[0].pop()
+
     def classify(self, xs):
         """Classify the data
 
