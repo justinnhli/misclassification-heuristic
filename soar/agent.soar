@@ -1,0 +1,74 @@
+
+sp {propose*init-agent
+    (state <s> ^superstate nil
+              -^name)
+-->
+    (<s> ^operator.name init-agent)
+}
+
+sp {apply*init-agent
+    (state <s> ^operator.name init-agent)
+-->
+    (<s> ^name fake-rosie)
+}
+
+# STORE
+
+sp {fakerosie*propose*store
+    (state <s> ^name fake-rosie
+               ^io.input-link.params.experiment semantic
+               ^smem <smem>)
+    (<smem> ^command <scmd>)
+   -{
+       (<scmd> ^store <store>)
+       (<smem> ^result.success <store>)
+    }
+-->
+    (<s> ^operator.name store)
+}
+
+sp {fakerosie*apply*store*store
+    (state <s> ^name fake-rosie
+               ^operator.name store
+               ^smem.command <scmd>
+               ^io.input-link <il>)
+    (<il> ^red <red>
+          ^green <green>
+          ^blue <blue>
+          ^color_name <colorname>
+          ^size <size>
+          ^size_name <sizename>
+          ^shape <shape>)
+-->
+    (<scmd> ^store <store>)
+    (<store> ^red <red>
+             ^green <green>
+             ^blue <blue>
+             ^color_name <colorname>
+             ^size <size>
+             ^size_name <sizename>
+             ^shape <shape>)
+}
+
+# NEXT
+
+sp {fakerosie*propose*next
+    (state <s> ^name fake-rosie
+               ^io.input-link.params.experiment semantic
+               ^smem <smem>)
+    (<smem> ^command.store <store>
+            ^result.success <store>)
+-->
+    (<s> ^operator.name next)
+}
+
+sp {fakerosie*apply*next
+    (state <s> ^name fake-rosie
+               ^operator.name next
+               ^smem.command <scmd>
+               ^io.output-link <ol>)
+    (<scmd> ^store <store>)
+-->
+    (<ol> ^next <dummy>)
+    (<scmd> ^store <store> -)
+}
