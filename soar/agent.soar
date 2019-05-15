@@ -1,3 +1,4 @@
+# INIT AGENT
 
 sp {propose*init-agent
     (state <s> ^superstate nil
@@ -9,15 +10,23 @@ sp {propose*init-agent
 sp {apply*init-agent
     (state <s> ^operator.name init-agent)
 -->
-    (<s> ^name fake-rosie)
+    (<s> ^name fake-rosie
+         ^incorrects <incorrects>
+         ^prefs <prefs>)
+    (<prefs> ^check-answer 10
+             ^try-combo 20
+             ^create-combo 30
+             ^find-next-rank 40)
 }
 
 # STORE
 
 sp {fakerosie*propose*store
     (state <s> ^name fake-rosie
-               ^io.input-link.params.experiment semantic
+               ^io.input-link <il>
                ^smem <smem>)
+    (<il> ^params.memory semantic
+          -^quiz)
     (<smem> ^command <scmd>)
    -{
        (<scmd> ^store <store>)
@@ -32,21 +41,23 @@ sp {fakerosie*apply*store*store
                ^operator.name store
                ^smem.command <scmd>
                ^io.input-link <il>)
-    (<il> ^red <red>
+    (<il> ^time <time>
+          ^red <red>
           ^green <green>
           ^blue <blue>
-          ^color_name <colorname>
+          ^color <color>
+          ^diameter <diameter>
           ^size <size>
-          ^size_name <sizename>
           ^shape <shape>)
 -->
     (<scmd> ^store <store>)
-    (<store> ^red <red>
+    (<store> ^time <time>
+             ^red <red>
              ^green <green>
              ^blue <blue>
-             ^color_name <colorname>
+             ^color <color>
+             ^diameter <diameter>
              ^size <size>
-             ^size_name <sizename>
              ^shape <shape>)
 }
 
@@ -54,7 +65,7 @@ sp {fakerosie*apply*store*store
 
 sp {fakerosie*propose*next
     (state <s> ^name fake-rosie
-               ^io.input-link.params.experiment semantic
+               ^io.input-link.params.memory semantic
                ^smem <smem>)
     (<smem> ^command.store <store>
             ^result.success <store>)
@@ -71,4 +82,519 @@ sp {fakerosie*apply*next
 -->
     (<ol> ^next <dummy>)
     (<scmd> ^store <store> -)
+}
+
+# DIRECT-SMEM-QUERY
+
+sp {fakerosie*propose*direct-smem-query
+    (state <s> ^name fake-rosie
+               ^io.input-link <il>
+               ^smem.command <scmd>
+              -^tried-naive)
+    (<il> ^quiz
+          ^params <params>)
+    (<params> ^memory semantic
+             -^strategy heuristic)
+-->
+    (<s> ^operator.name direct-smem-query)
+}
+
+sp {fakerosie*elaborate*direct-smem-query
+    (state <s> ^name fake-rosie
+               ^operator <op> +
+               ^io.input-link <il>)
+    (<op> ^name direct-smem-query)
+    (<il> ^{<attr> <> quiz <> params <> incorrect} <val>)
+-->
+    (<op> ^<attr> <val>)
+}
+   
+sp {fakerosie*apply*direct-smem-query*done
+    (state <s> ^name fake-rosie
+               ^operator.name direct-smem-query
+               ^smem <smem>
+               ^io.input-link <il>)
+    (<smem> ^command.query <sqry>
+            ^result.<result> <sqry>)
+   -{
+        (<sqry> ^<attr> <val>)
+       -(<il> ^<attr> <val>)
+    }
+-->
+    (<s> ^tried-naive yes)
+}
+
+# DIRECT-SMEM-QUERY
+
+sp {fakerosie*apply*direct-smem-query*create-query
+    (state <s> ^operator.name direct-smem-query
+               ^smem.command <scmd>)
+    (<scmd> -^query)
+-->
+    (<scmd> ^query <sqry>)
+}
+
+sp {fakerosie*apply*direct-smem-query*add-query-terms
+    (state <s> ^operator <op>
+               ^smem.command.query <sqry>)
+    (<op> ^name direct-smem-query
+          ^{<attr> <> name} <val>)
+-->
+    (<sqry> ^<attr> <val>)
+}
+
+# SMEM-CHECK-ANSWER
+
+sp {fakerosie*propose*check-answer
+    (state <s> ^name fake-rosie
+               ^smem <smem>
+              -^io.output-link.check.time <time>)
+    (<smem> ^command.query <sqry>
+            ^result <sres>)
+    (<sres> ^success <sqry>
+            ^retrieved.time <time>)
+-->
+    (<s> ^operator <op> +)
+    (<op> ^name check-answer
+          ^time <time>)
+}
+
+sp {fakerosie*apply*check-answer
+    (state <s> ^operator <op>
+               ^io.output-link <ol>)
+    (<op> ^name check-answer
+          ^time <time>)
+-->
+   (<ol> ^check.time <time>)
+}
+
+# SMEM-SIMPLE
+
+sp {fakerosie*propose*smem-simple
+    (state <s> ^name fake-rosie
+               ^tried-naive
+               ^smem <smem>
+               ^io.input-link.params.strategy simple)
+-->
+    (<s> ^operator.name smem-simple)
+}
+
+sp {fakerosie*apply*smem-simple*failure
+    (state <s> ^name fake-rosie
+               ^operator.name smem-simple
+               ^smem <smem>
+               ^io.output-link <ol>)
+    (<smem> ^command.query <sqry>
+            ^result.failure <sqry>)
+-->
+   (<ol> ^give-up <dummy>)
+}
+
+sp {fakerosie*apply*smem-simple*incorrect
+    (state <s> ^name fake-rosie
+               ^operator.name smem-simple
+               ^smem <smem>
+               ^io.output-link <ol>)
+    (<ol> ^check.status incorrect)
+-->
+    (<ol> ^give-up <dummy>)
+}
+
+# SMEM-EXHAUSTIVE
+
+sp {fakerosie*propose*smem-exhaustive*failure
+    (state <s> ^name fake-rosie
+               ^tried-naive
+               ^smem.result.failure
+               ^io.input-link.params.strategy exhaustive)
+-->
+    (<s> ^operator.name smem-exhaustive)
+}
+
+sp {fakerosie*propose*smem-exhaustive*incorrect
+    (state <s> ^name fake-rosie
+               ^tried-naive
+               ^smem.result.retrieved.time <time>
+               ^io <io>)
+    (<io> ^input-link.params.strategy exhaustive
+          ^output-link.check <check>)
+    (<check> ^time <time>
+             ^status incorrect)
+-->
+    (<s> ^operator.name smem-exhaustive)
+}
+
+sp {fakerosie*apply*smem-exhaustive*genericize-query
+    (state <s> ^name fake-rosie
+               ^operator.name smem-exhaustive
+               ^smem <smem>
+               ^io <io>)
+    (<io> ^input-link.<attr> <val>
+          ^output-link <ol>)
+    (<smem> ^command.query <sqry>
+            ^result.failure <sqry>)
+    (<sqry> ^<attr> <val>)
+-->
+    (<sqry> ^<attr> <val> -
+            ^<attr> <dummy>)
+}
+
+sp {fakerosie*apply*smem-exhaustive*prohibit
+    (state <s> ^name fake-rosie
+               ^operator.name smem-exhaustive
+               ^smem <smem>
+               ^io.output-link <ol>)
+    (<ol> ^check <answer>)
+    (<answer> ^time <time>
+              ^status incorrect)
+    (<smem> ^command <scmd>
+            ^result <sres>)
+    (<sres> ^retrieved <retrieved>
+            ^success)
+-->
+    (<scmd> ^prohibit <retrieved>)
+    (<ol> ^check <answer> -)
+}
+
+# SMEM-HEURISTIC
+
+sp {fakerosie*propose*smem-heuristic
+    (state <s> ^name fake-rosie
+               ^io.input-link.quiz)
+
+-->
+    (<s> ^operator.name smem-heuristic)
+}
+
+sp {fakerose*elaborate*smem-heuristic
+    (state <s> ^name fake-rosie
+               ^operator <op> +
+               ^io.input-link <il>)
+    (<op> ^name smem-heuristic)
+    (<il> ^{<attr> <> quiz <> params <> incorrect} <val>)
+-->
+    (<op> ^<attr> <val>)
+}
+
+sp {heuristic*elaborate*initialize-options
+    (state <s> ^name smem-heuristic
+               ^superstate.operator <sop>)
+    (<sop> ^size <size>
+           ^color <color>)
+-->
+    (<s> ^options <options>
+         ^combos <combos>)
+    (<options> ^size.option <orig-size>
+               ^color.option <orig-color>)
+    (<orig-size> ^type size
+                 ^item <size>
+                 ^prev <size-dummy>
+                 ^rank 0)
+    (<orig-color> ^type color
+                 ^item <color>
+                 ^prev <color-dummy>
+                 ^rank 0)
+}
+
+# HEURISTIC :: CHECK-ANSWER
+
+sp {heuristic*propose*check-answer
+    (state <s> ^name smem-heuristic
+               ^combos.combo <combo>)
+    (<combo> ^success <success>)
+    (<success> ^time <time>
+              -^checked)
+-->
+    (<s> ^operator <o> +)
+    (<o> ^name check-answer
+         ^time <time>)
+}
+
+sp {heuristic*apply*check-answer*incorrect
+    (state <s> ^name smem-heuristic
+               ^operator.name check-answer
+               ^io.output-link.check <check>
+               ^combos.combo.success <success>)
+    (<check> ^time <time>
+             ^status incorrect)
+    (<success> ^time <time>)
+-->
+    (<success> ^checked yes)
+}
+
+# HEURISTIC :: TRY-COMBO
+
+sp {heuristic*propose*try-combo
+    (state <s> ^name smem-heuristic
+               ^combos.combo <combo>)
+    (<combo> -^failed)
+-->
+    (<s> ^operator <o> +)
+    (<o> ^name try-combo
+         ^combo <combo>)
+}
+
+sp {heuristic*prefer*try-combo*lower-rank
+    (state <s> ^name smem-heuristic
+               ^operator <o1> +
+               ^operator <o2> +)
+    (<o1> ^name try-combo
+          ^combo.combined-rank <rank1>)
+    (<o2> ^name try-combo
+          ^combo.combined-rank {> <rank1>})
+-->
+    (<s> ^operator <o1> > <o2>)
+}
+
+sp {heuristic*prefer*try-combo*equal-rank
+    (state <s> ^name smem-heuristic
+               ^operator <o1> +
+               ^operator <o2> +)
+    (<o1> ^name try-combo
+          ^combo.combined-rank <rank1>)
+    (<o2> ^name try-combo
+          ^combo.combined-rank <rank1>)
+-->
+    (<s> ^operator <o1> = <o2>)
+}
+
+# HEURISTIC :: TRY-COMBO :: DIRECT-SMEM-QUERY
+
+sp {try-combo*propose*direct-smem-query
+    (state <s> ^name try-combo
+               ^superstate.operator.combo.terms <terms>)
+    (<terms> ^size <size>
+             ^color <color>)
+-->
+    (<s> ^operator <op> +)
+    (<op> ^name direct-smem-query
+          ^size <size>
+          ^color <color>)
+}
+
+sp {try-combo*propose*direct-smem-query*prohibit
+    (state <s> ^name try-combo
+               ^operator.name direct-smem-query
+               ^smem.command <scmd>
+               ^superstate.operator <sop>)
+    (<sop> ^combo.success.lti <lti>)
+-->
+    (<scmd> ^prohibit <lti>)
+}
+
+sp {try-combo*apply*direct-smem-query*success
+    (state <s> ^name try-combo
+               ^operator.name direct-smem-query
+               ^superstate.operator.combo <combo>
+               ^smem <smem>)
+    (<smem> ^command.query <sqry>
+            ^result <sres>)
+    (<sres> ^success <sqry>
+            ^retrieved <lti>)
+    (<lti> ^time <time>)
+-->
+    (<combo> ^success <success>)
+    (<success> ^lti <lti>
+               ^time <time>)
+}
+
+sp {try-combo*apply*direct-smem-query*failure
+    (state <s> ^name try-combo
+               ^operator.name direct-smem-query
+               ^superstate.operator.combo <combo>
+               ^smem <smem>)
+    (<smem> ^command.query <sqry>
+            ^result.failure <sqry>)
+-->
+    (<combo> ^failed yes)
+}
+
+# HEURISTIC :: CREATE-COMBO
+
+sp {heuristic*propose*create-combo
+    (state <s> ^name smem-heuristic
+               ^options <options>
+               ^combos <combos>)
+    (<options> ^size.option <size-option>
+               ^color.option <color-option>)
+    (<size-option> ^item <size>
+                   ^rank <size-rank>)
+    (<color-option> ^item <color>
+                    ^rank <color-rank>)
+   -{
+        (<combos> ^combo.terms <terms>)
+        (<terms> ^size <size>
+                 ^color <color>)
+    }
+-->
+    (<s> ^operator <op> +)
+    (<op> ^name create-combo
+          ^size <size>
+          ^color <color>
+          ^combined-rank (+ <size-rank> <color-rank>))
+}
+
+sp {heuristic*prefer*create-combo
+    (state <s> ^name smem-heuristic
+               ^operator <o1> +
+               ^operator <o2> +)
+    (<o1> ^name create-combo)
+    (<o2> ^name create-combo)
+-->
+    (<s> ^operator <o1> = <o2>)
+}
+
+sp {heuristic*apply*create-combo
+    (state <s> ^name smem-heuristic
+               ^operator <op>
+               ^combos <combos>)
+    (<op> ^name create-combo
+          ^size <size>
+          ^color <color>
+          ^combined-rank <combined-rank>)
+-->
+    (<combos> ^combo <combo>)
+    (<combo> ^terms <terms>
+             ^combined-rank <combined-rank>)
+    (<terms> ^size <size>
+             ^color <color>)
+}
+
+# HEURISTIC :: FIND-NEXT-RANK
+
+sp {heuristic*propose*find-next-rank
+    (state <s> ^name smem-heuristic
+               ^io.input-link.params.depth <depth>
+               ^options.<type> <type-options>)
+    (<type-options> ^option <option>
+                   -^option.prev <item>)
+    (<option> ^item <item>
+              ^rank {< <depth>})
+-->
+    (<s> ^operator <op> + =)
+    (<op> ^name find-next-rank
+          ^option <option>)
+}
+
+sp {heuristic*prefer*find-next-rank*lower-rank
+    (state <s> ^name smem-heuristic
+               ^operator <o1> +
+               ^operator <o2> +)
+    (<o1> ^name find-next-rank
+          ^combo.combined-rank <rank1>)
+    (<o2> ^name find-next-rank
+          ^combo.combined-rank {> <rank1>})
+-->
+    (<s> ^operator <o1> > <o2>)
+}
+
+sp {heuristic*prefer*find-next-rank*equal-rank
+    (state <s> ^name smem-heuristic
+               ^operator <o1> +
+               ^operator <o2> +)
+    (<o1> ^name find-next-rank
+          ^combo.combined-rank <rank1>)
+    (<o2> ^name find-next-rank
+          ^combo.combined-rank <rank1>)
+-->
+    (<s> ^operator <o1> > <o2>)
+}
+
+sp {heuristic*apply*find-next-rank*init-query
+    (state <s> ^name smem-heuristic
+               ^operator <op>
+               ^smem.command <scmd>)
+    (<op> ^name find-next-rank
+          ^option <option>)
+    (<option> ^item <item>
+              ^type <type>)
+-->
+    (<scmd> ^query <sqry>)
+    (<sqry> ^name <item>
+            ^type <type>)
+}
+
+sp {heuristic*apply*find-next-rank*get-next
+    (state <s> ^name smem-heuristic
+               ^operator <op>
+               ^superstate.operator.<type> <orig>
+               ^smem <smem>)
+    (<op> ^name find-next-rank
+          ^option.type <type>)
+    (<smem> ^command <scmd>
+            ^result.retrieved <retrieved>)
+    (<scmd> ^query <sqry>)
+    (<retrieved> ^name <name>
+                 ^<orig> <lti>)
+-->
+    (<scmd> ^query <sqry> -
+            ^retrieve <lti>)
+}
+
+sp {heuristic*apply*find-next-rank*store
+    (state <s> ^name smem-heuristic
+               ^operator <op>
+               ^smem <smem>
+               ^options.<type> <options>)
+    (<op> ^name find-next-rank
+          ^option <option>)
+    (<option> ^type <type>
+              ^item <item>
+              ^rank <rank>)
+    (<smem> ^command <scmd>
+            ^result <sres>)
+    (<scmd> ^retrieve <ret>)
+    (<sres> ^retrieved.name <name>
+            ^success <ret>)
+-->
+    (<scmd> ^retrieve <ret> -)
+    (<options> ^option <new-option>)
+    (<new-option> ^type <type>
+                  ^item <name>
+                  ^prev <item>
+                  ^rank (+ <rank> 1))
+}
+
+# HALT
+
+sp {halt
+    (state <s> ^io.output-link.check.status correct)
+-->
+    (halt)
+}
+
+# GENERIC
+
+sp {inherit
+   (state <s> ^impasse no-change
+              ^superstate <ss>)
+   (<ss> ^io <io>
+         ^operator.name <operator>
+         ^prefs <prefs>)
+-->
+   (<s> ^name <operator>
+        ^io <io>
+        ^prefs <prefs>)
+}
+
+sp {prefer
+    (state <s> ^operator <o1> +
+               ^operator <o2> +
+               ^prefs <prefs>)
+    (<o1> ^name <name1>)
+    (<o2> ^name <name2>)
+    (<prefs> ^<name1> <priority1>
+             ^<name2> {> <priority1>})
+-->
+    (<s> ^operator <o1> > <o2>)
+}
+
+sp {remove-completed-output
+    (state <s> ^name fake-rosie
+               ^operator.name <opname>
+               ^io.output-link <ol>)
+    (<ol> ^next <cmd>)
+    (<cmd> ^status complete)
+-->
+    (<ol> ^next <cmd> - )
 }
