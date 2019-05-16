@@ -1,31 +1,32 @@
 import math
-from argparse import ArgumentParser
 from collections import namedtuple, defaultdict
 from pathlib import Path
 from random import Random
 
+from permspace import PermutationSpace
+
 from colors import NearestCentroid, CENTROIDS
-from soar_utils.soar_utils import create_agent, SoarEnvironment, cli
+from soar_utils.soar_utils import create_agent, SoarEnvironment, cli as agent_cli
 
 Color = namedtuple('Color', 'name, red, green, blue')
 
-NUM_TRAIN_CENTROIDS = 5
-NUM_TEST_CENTROIDS = 7
-
 class FakeTableTop(SoarEnvironment):
-
-    NUM_OBJECTS = 20
 
     SIZE_FILE = Path(__file__).parent.joinpath('soar/sizes')
     SHAPE_FILE = Path(__file__).parent.joinpath('soar/shapes')
 
-    def __init__(self, agent, seed=8675309):
+    def __init__(self, agent, args):
         super().__init__(agent)
+        # parameters
+        self.num_objects = args.num_objects
+        self.num_train_centroids = args.num_train_centroids
+        self.num_test_centroids = args.num_test_centroids
+        # variables
         self.time = -1
-        self.rng = Random(seed)
+        self.rng = Random(args.random_seed)
         self.history = []
         self.showing = False
-        self.color_classifier = NearestCentroid(CENTROIDS[:NUM_TRAIN_CENTROIDS])
+        self.color_classifier = NearestCentroid(CENTROIDS[:self.num_train_centroids])
         with self.SIZE_FILE.open() as fd:
             self.sizes = [line.strip() for line in fd.readlines()]
         with self.SHAPE_FILE.open() as fd:
@@ -33,11 +34,17 @@ class FakeTableTop(SoarEnvironment):
         self.min_diameter = 100
         self.max_diameter = 0
         self.answer = None
+        # reports
+        self.quiz_clues = None
+        self.quiz_answer = None
+        self.num_checks = 0
+        self.status = 'running'
 
     def initialize_io(self):
         # this function is called automatically by the super class
         self.next()
         self.show_object()
+        self.add_wme(self.agent.input_link, 'stage', 'learn')
 
     def show_object(self):
         assert not self.showing
@@ -71,7 +78,7 @@ class FakeTableTop(SoarEnvironment):
         )
 
     def _name_color(self, color):
-        return self.color_classifier.classify_one(color).name
+        return self.color_classifier.classify_one(color).name.replace(' ', '_')
 
     def _next_diameter(self):
         diameter = self.rng.gauss(50, 10)
@@ -107,24 +114,27 @@ class FakeTableTop(SoarEnvironment):
         for command in self.parse_output_commands():
             if command.name == 'next':
                 self.remove_object()
-                if self.time < self.NUM_OBJECTS:
+                if self.time < self.num_objects:
                     self.next()
                     self.show_object()
                 else:
-                    self.color_classifier = NearestCentroid(CENTROIDS[:NUM_TEST_CENTROIDS])
+                    self.color_classifier = NearestCentroid(CENTROIDS[:self.num_test_centroids])
                     self.show_quiz()
                 command.add_status('complete')
             elif command.name == 'check':
+                self.num_checks += 1
                 if self.answer['time'] == command.arguments['time']:
                     command.add_status('correct')
-                    # FIXME what to do if correct?
+                    self.status = 'correct'
                 else:
                     command.add_status('incorrect')
             elif command.name == 'give-up':
-                pass # FIXME
+                command.add_status('complete')
+                self.status = 'gave-up'
 
     def show_quiz(self):
         input_link = self.agent.input_link
+        self.del_wme(input_link, 'stage', 'learn')
         # find object that has changed
         candidates = []
         for candidate in self.history:
@@ -147,15 +157,31 @@ class FakeTableTop(SoarEnvironment):
             if not has_same:
                 candidates.append(candidate)
         # create input
-        self.add_wme(input_link, 'quiz', 'yes')
+        self.add_wme(input_link, 'stage', 'quiz')
         if candidates:
-            target = self.rng.choice(candidates)
+            target = self.rng.choice(sorted(
+                candidates,
+                key=(lambda c: c['time']),
+            ))
         else:
-            target = self.rng.choice(self.history)
+            target = self.rng.choice(sorted(
+                self.history,
+                key=(lambda c: c['time']),
+            ))
         new_size = self._name_size(target['diameter'])
         new_color = self._name_color((target['red'], target['green'], target['blue']))
-        print(f'clues: {new_size} {new_color} {target["shape"]}')
-        print(f'target: {target["size"]} {target["color"]} {target["shape"]}')
+        self.quiz_clues = f'{new_size} {new_color} {target["shape"]}'
+        self.quiz_answer = f'{target["size"]} {target["color"]} {target["shape"]}'
+        '''
+        for h in self.history:
+            print(h['size'], h['color'], h['shape'])
+        print()
+        for h in candidates:
+            print(h['size'], h['color'], h['shape'])
+        print()
+        print(f'clue: {self.quiz_clues}')
+        print(f'answer: {self.quiz_answer} ({target["time"]})')
+        '''
         self.add_wme(input_link, 'size', new_size)
         self.add_wme(input_link, 'color', new_color)
         self.add_wme(input_link, 'shape', target['shape'])
@@ -163,16 +189,18 @@ class FakeTableTop(SoarEnvironment):
 
 
 def set_agent_commands(_, agent, args):
+    agent.execute_command_line('decide set-random-seed 8675309')
     agent.execute_command_line('smem --enable')
     agent.execute_command_line('smem --init')
-    if args.memory == 'episodic':
+    if args.memory == 'epmem':
         agent.execute_command_line('epmem --enable')
         agent.execute_command_line('epmem --init')
 
-def init_agemt_smem(env, agent, _):
+
+def init_agemt_smem(env, agent, args):
     # load memory with colors
     wmes = []
-    for color in CENTROIDS[:NUM_TEST_CENTROIDS]:
+    for color in CENTROIDS[:args.num_test_centroids]:
         name = color.name.replace(' ', '_')
         wmes.append(' '.join([
             f'(<{name}>',
@@ -183,10 +211,10 @@ def init_agemt_smem(env, agent, _):
             f'^name {name})',
         ]))
     distances = defaultdict(list)
-    for i, color1 in enumerate(CENTROIDS[:NUM_TEST_CENTROIDS]):
+    for i, color1 in enumerate(CENTROIDS[:args.num_test_centroids]):
         name1 = color1.name.replace(' ', '_')
         distances[name1].append((0, name1))
-        for j, color2 in enumerate(CENTROIDS[i+1:NUM_TEST_CENTROIDS]):
+        for j, color2 in enumerate(CENTROIDS[i+1:args.num_test_centroids]):
             name2 = color2.name.replace(' ', '_')
             distance = math.sqrt(
                 (color1.r - color2.r)**2
@@ -231,31 +259,89 @@ def init_agemt_smem(env, agent, _):
 def create_agent_params(env, agent, args):
     input_link = agent.input_link
     params_wme = env.add_wme(input_link, 'params')
-    env.add_wme(params_wme.value, 'memory', args.memory)
-    env.add_wme(params_wme.value, 'strategy', args.strategy)
-    env.add_wme(params_wme.value, 'random-seed', args.random_seed)
-    env.add_wme(params_wme.value, 'depth', args.depth)
+    if hasattr(args, 'index_'): # HACK for PermSpace.Namespace
+        keyvals = args._asdict().items()
+    else:
+        keyvals = vars(args).items()
+    for key, val in keyvals:
+        if key.endswith('_'):
+            continue
+        env.add_wme(params_wme.value, key.replace('_', '-'), val)
     agent.execute_command_line('load file soar/agent.soar')
 
+ExpResult = namedtuple('ExpResult', 'clue answer obsolete status num_checks')
 
-def run_experiment(args):
+def run_experiment(args, interactive=False):
     with create_agent() as agent:
-        env = FakeTableTop(agent, seed=int(args.random_seed))
+        env = FakeTableTop(agent, args)
         set_agent_commands(env, agent, args)
         init_agemt_smem(env, agent, args)
         create_agent_params(env, agent, args)
-        cli(agent)
+        if interactive:
+            agent_cli(agent)
+        else:
+            #agent_cli(agent)
+            agent.execute_command_line('run')
+        return ExpResult(
+            env.quiz_clues, env.quiz_answer,
+            env.quiz_clues != env.quiz_answer,
+            env.status, env.num_checks,
+        )
+
+ExpParams = namedtuple('ExpParams', 'memory, strategy, random_seed, depth')
+
+RNG = Random(8675309)
+
+PSPACE = PermutationSpace(
+    ['random_seed', 'memory', 'strategy', 'depth'],
+    # environment
+    num_objects=20,
+    num_train_centroids=5,
+    num_test_centroids=7,
+    # agent
+    memory=['smem', 'epmem'],
+    strategy=['exact', 'exhaustive', 'heuristic'],
+    random_seed=[RNG.random() for _ in range(100)],
+    depth=[0, 100],
+).filter(
+    lambda strategy, depth:
+        (strategy != 'heuristic' and depth == 0)
+        or (strategy == 'heuristic' and depth != 0)
+)
+
+def cli():
+    args = PSPACE.cli(defaults={
+        # environment
+        'num_objects': 20,
+        'num_train_centroids': 5,
+        'num_test_centroids': 7,
+        # agent
+        'memory': 'epmem',
+        'strategy': 'heuristic',
+        'random_seed': 8675309,
+        'depth': 100,
+    })
+    print(args)
+    print(run_experiment(args, interactive=True))
 
 
 def main():
-    arg_parser = ArgumentParser()
-    arg_parser.add_argument('--memory', choices=['semantic', 'episodic'], default='epmem')
-    arg_parser.add_argument('--strategy', choices=['simple', 'exhaustive', 'heuristic'], default='heuristic')
-    arg_parser.add_argument('--random-seed', default=8675309)
-    arg_parser.add_argument('--depth', type=int, default=1)
-    args = arg_parser.parse_args()
-    run_experiment(args)
-
+    for params in PSPACE.filter(lambda memory: memory == 'epmem'):
+    #for params in PSPACE:
+        results = run_experiment(params)
+        print('\t'.join(str(item) for item in [
+            params.num_objects,
+            params.num_train_centroids,
+            params.num_test_centroids,
+            params.memory,
+            params.strategy,
+            params.random_seed,
+            params.depth,
+            results.obsolete,
+            results.status,
+            results.num_checks,
+        ]))
 
 if __name__ == '__main__':
+    #cli()
     main()
