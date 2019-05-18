@@ -37,6 +37,7 @@ class FakeTableTop(SoarEnvironment):
         # reports
         self.quiz_clues = None
         self.quiz_answer = None
+        self.differences = 0
         self.num_checks = 0
         self.status = 'running'
 
@@ -142,27 +143,31 @@ class FakeTableTop(SoarEnvironment):
             new_size = self._name_size(candidate['diameter'])
             new_color = self._name_color((candidate['red'], candidate['green'], candidate['blue']))
             # check that an object is different
-            is_candidate = (
-                candidate['size'] != new_size
-                or candidate['color'] != new_color
-            )
-            if not is_candidate:
+            num_diff = 0
+            if candidate['size'] != new_size:
+                num_diff += 1
+            if candidate['color'] != new_color:
+                num_diff += 1
+            if num_diff == 0:
                 continue
             # check that no object has that description
-            has_same = False
-            for obj in self.history:
-                if obj['size'] == new_size and obj['color'] == new_color:
-                    has_same = True
-                    break
+            has_same = any(
+                obj['size'] == new_size and obj['color'] == new_color
+                for obj in self.history
+            )
             if not has_same:
-                candidates.append(candidate)
+                candidates.append((num_diff, candidate))
         # create input
         self.add_wme(input_link, 'stage', 'quiz')
         if candidates:
+            # FIXME prefer candidates that are different on two counts
             target = self.rng.choice(sorted(
                 candidates,
-                key=(lambda c: c['time']),
+                key=(lambda c: (c[0], c[1]['time'])),
+                reverse=True,
             ))
+            self.differences = target[0]
+            target = target[1]
         else:
             target = self.rng.choice(sorted(
                 self.history,
@@ -269,7 +274,7 @@ def create_agent_params(env, agent, args):
         env.add_wme(params_wme.value, key.replace('_', '-'), val)
     agent.execute_command_line('load file soar/agent.soar')
 
-ExpResult = namedtuple('ExpResult', 'clue answer obsolete status num_checks')
+ExpResult = namedtuple('ExpResult', 'clue answer differences status num_checks')
 
 def run_experiment(args, interactive=False):
     with create_agent() as agent:
@@ -284,7 +289,7 @@ def run_experiment(args, interactive=False):
             agent.execute_command_line('run')
         return ExpResult(
             env.quiz_clues, env.quiz_answer,
-            env.quiz_clues != env.quiz_answer,
+            env.differences,
             env.status, env.num_checks,
         )
 
@@ -326,8 +331,7 @@ def cli():
 
 
 def main():
-    for params in PSPACE.filter(lambda memory: memory == 'epmem'):
-    #for params in PSPACE:
+    for params in PSPACE:
         results = run_experiment(params)
         print('\t'.join(str(item) for item in [
             params.num_objects,
@@ -337,7 +341,7 @@ def main():
             params.strategy,
             params.random_seed,
             params.depth,
-            results.obsolete,
+            results.differences,
             results.status,
             results.num_checks,
         ]))
