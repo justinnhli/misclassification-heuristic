@@ -1,9 +1,19 @@
+# utility packages
+pandas
+
+# jupyter notebook packages
+jupyter
+bokeh
+
+# neural network packages
 keras
 #tensorflow
-https://storage.googleapis.com/tensorflow/mac/cpu/tensorflow-1.8.0-py3-none-any.whl
+#https://storage.googleapis.com/tensorflow/mac/cpu/tensorflow-1.9.0-py3-none-any.whl
+#tfnightly
 h5py
-scikit-image
-jupyter
-pandas
-bokeh
+
+# machine learning packages
+scikit-learn
+
+# experiment packages
 git+https://github.com/justinnhli/clusterun.git
