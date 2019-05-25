@@ -6,3 +6,4 @@ scikit-image
 jupyter
 pandas
 bokeh
+git+https://github.com/justinnhli/clusterun.git
