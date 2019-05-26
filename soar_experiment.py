@@ -197,6 +197,8 @@ def set_agent_commands(_, agent, args):
     agent.execute_command_line('decide set-random-seed 8675309')
     agent.execute_command_line('smem --enable')
     agent.execute_command_line('smem --init')
+    agent.execute_command_line('smem --set activation-mode base-level')
+    agent.execute_command_line('smem --set spreading on')
     if args.memory == 'epmem':
         agent.execute_command_line('epmem --enable')
         agent.execute_command_line('epmem --init')
