@@ -130,7 +130,6 @@ def binary_to_ints(binary):
     return sorted(i for i, b in enumerate(reversed(binary_str)) if b == '1')
 
 def main():
-    print('{')
     rng = Random(8675309)
     for num in range(2, 20):
         for orig_labels in combinations(list(range(20)), num):
@@ -139,8 +138,6 @@ def main():
             utils = NewsgroupUtils(int_labels)
             dataset = NewsgroupDataset(int_labels)
             trial = RegretTrial(classifier, utils, dataset, path_prefix='newsgroup_cache')
-            print(f'    ({orig_labels}, {trial.mean_regret_scaled()}),')
-    print('}')
 
 if __name__ == '__main__':
     main()
