@@ -8,7 +8,7 @@ from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.linear_model import SGDClassifier
 from sklearn.pipeline import Pipeline
 
-from classifiers import DomainUtils, Classifier, Dataset, RegretTrial
+from misclass import DomainUtils, Classifier, Dataset, RegretTrial
 
 LABELS = [
     'alt.atheism',

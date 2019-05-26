@@ -19,7 +19,7 @@ from keras.optimizers import rmsprop
 from keras.preprocessing.image import ImageDataGenerator
 from keras.utils import to_categorical
 
-from classifiers import DomainUtils, Classifier, Dataset, RegretTrial
+from misclass import DomainUtils, Classifier, Dataset, RegretTrial
 
 FILE_DIR = dirname(realpath(__file__))
 

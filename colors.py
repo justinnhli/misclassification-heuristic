@@ -5,7 +5,7 @@ from argparse import ArgumentParser
 from os.path import basename, dirname, exists as file_exists, expanduser, join as join_path, realpath, splitext
 from random import seed as set_seed, random, randrange
 
-from classifiers import DomainUtils, Classifier, Dataset, RegretTrial
+from misclass import DomainUtils, Classifier, Dataset, RegretTrial
 from kd_tree import KD_Tree
 
 DIRECTORY = dirname(realpath(__file__))
