@@ -71,7 +71,10 @@ class NewsgroupDataset(Dataset):
         return self.data.data
 
     def get_y(self):
-        return self.data.target
+        return [
+            LABELS.index(self.data.target_names[i])
+            for i in self.data.target
+        ]
 
 
 class NewsgroupClassifier(Classifier):
