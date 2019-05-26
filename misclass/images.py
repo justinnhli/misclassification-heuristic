@@ -19,7 +19,7 @@ from keras.optimizers import rmsprop
 from keras.preprocessing.image import ImageDataGenerator
 from keras.utils import to_categorical
 
-from misclass import DomainUtils, Classifier, Dataset, RegretTrial
+from .misclass import DomainUtils, Classifier, Dataset, RegretTrial, create_tribulation
 
 FILE_DIR = dirname(realpath(__file__))
 
@@ -64,11 +64,11 @@ class ImageUtils(DomainUtils):
         assert dataset_str in ['cifar10', 'cifar100'], 'unrecognized dataset "{}"'.format(dataset_str)
         # set data files
         if dataset_str == 'cifar10':
-            uri_file = join_path(FILE_DIR, 'umbel/cifar10.uris')
-            distance_file = join_path(FILE_DIR, 'umbel/cifar10.distances')
+            uri_file = join_path(FILE_DIR, '../data/umbel/cifar10.uris')
+            distance_file = join_path(FILE_DIR, '../data/umbel/cifar10.distances')
         elif dataset_str == 'cifar100':
-            uri_file = join_path(FILE_DIR, 'umbel/cifar100.uris')
-            distance_file = join_path(FILE_DIR, 'umbel/cifar100.distances')
+            uri_file = join_path(FILE_DIR, '../data/umbel/cifar100.uris')
+            distance_file = join_path(FILE_DIR, '../data/umbel/cifar100.distances')
         # initialize data
         self.dataset_str = dataset_str
         self.labels = []
@@ -428,6 +428,18 @@ def sample_classes(p, k):
     while p == 100 and AQUARIUM_FISH_Y in int_labels:
         int_labels = sample(range(p), k)
     return sorted(int_labels)
+
+
+def create_image_tribulation(directory):
+    df = create_tribulation(directory, from_file_fn=from_file)
+    df['neural_network'] = df['trial_id'].apply(
+        lambda s: NeuralNetwork(join_path(directory, s.split('_')[0] + '.hdf5'))
+    )
+    df['int_labels'] = df['neural_network'].apply(lambda nn: tuple(nn.int_labels))
+    df['batch_size'] = df['neural_network'].apply(lambda nn: nn.batch_size)
+    df['num_epochs'] = df['neural_network'].apply(lambda nn: nn.num_epochs)
+    del df['neural_network']
+    return df
 
 
 def main():

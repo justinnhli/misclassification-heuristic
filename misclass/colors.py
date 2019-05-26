@@ -5,12 +5,12 @@ from argparse import ArgumentParser
 from os.path import basename, dirname, exists as file_exists, expanduser, join as join_path, realpath, splitext
 from random import seed as set_seed, random, randrange
 
-from misclass import DomainUtils, Classifier, Dataset, RegretTrial
-from kd_tree import KD_Tree
+from .misclass import DomainUtils, Classifier, Dataset, RegretTrial, create_tribulation
+from .kd_tree import KD_Tree
 
 DIRECTORY = dirname(realpath(__file__))
 #DIRECTORY = realpath(expanduser('~/git/aaai2018/color-code'))
-COLOR_NAMES_FILE = join_path(DIRECTORY, 'color-data/color-centroids.tsv')
+COLOR_NAMES_FILE = join_path(DIRECTORY, '../data/color/color-centroids.tsv')
 
 
 class Color:
@@ -249,6 +249,23 @@ def from_file(filepath):
     )
 
 
+def create_color_tribulation(directory):
+    df = create_tribulation(directory, from_file_fn=from_file)
+    regex = 'colors(?P<num_centroids>[0-9]*)_'
+    regex += 's(?P<random_seed>[0-9.]*)'
+    regex += 'n(?P<dataset_size>[0-9]*)'
+    regex += 'k(?P<num_colors>[0-9]*)'
+    df['regex'] = df['trial_id'].apply(
+        lambda s: re.match(regex, s)
+    )
+    for attr in ['random_seed', 'num_centroids', 'dataset_size', 'num_colors']:
+        df[attr] = df['regex'].apply(lambda match, attr=attr: match.group(attr))
+        if attr != 'random_seed':
+            df[attr] = df[attr].astype(int)
+    del df['regex']
+    return df
+
+
 def main():
     arg_parser = ArgumentParser()
     arg_parser.add_argument('--num-old-labels', type=int, default=20, help='number of labels to use')
@@ -291,3 +308,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

@@ -11,9 +11,6 @@ from statistics import mean
 import numpy as np
 import pandas as pd
 
-from images import image_from_file, NeuralNetwork
-from colors import color_from_file
-
 
 FILE_DIR = dirname(realpath(__file__))
 
@@ -544,7 +541,7 @@ def trial_to_dataframe(trial):
     return pd.DataFrame(trial_df_rows, columns=TRIAL_COLUMNS)
 
 
-def create_tribulation(directory):
+def create_tribulation(directory, from_file_fn):
     """Convert a collection of trials (a "tribulation") to a dataframe.
 
     Since what we are interested in is how the new classes are distributed
@@ -563,12 +560,6 @@ def create_tribulation(directory):
     tribulation_file = join_path(directory, basename(directory) + '.tribulation')
     if file_exists(tribulation_file):
         return pd.read_csv(tribulation_file)
-    if basename(directory).startswith('color'):
-        from_file = color_from_file
-    elif basename(directory).startswith('cifar'):
-        from_file = image_from_file
-    else:
-        raise ValueError('Cannot determine domain for directory {}'.format(directory))
     trial_dfs = {}
     trials_list = [
         filename for filename in listdir(directory)
@@ -583,39 +574,10 @@ def create_tribulation(directory):
         if file_exists(trial_df_file):
             trial_df = pd.read_csv(trial_df_file)
         else:
-            trial = from_file(join_path(directory, filename))
+            trial = from_file_fn(join_path(directory, filename))
             trial_df = trial_to_dataframe(trial)
             trial_df.to_csv(trial_df_file, index=False)
         trial_dfs[trial_id] = trial_df
     tribulation_df = pd.concat(trial_dfs.values())
     tribulation_df.to_csv(tribulation_file, index=False)
     return tribulation_df
-
-
-def create_color_tribulation(directory):
-    df = create_tribulation(directory)
-    regex = 'colors(?P<num_centroids>[0-9]*)_'
-    regex += 's(?P<random_seed>[0-9.]*)'
-    regex += 'n(?P<dataset_size>[0-9]*)'
-    regex += 'k(?P<num_colors>[0-9]*)'
-    df['regex'] = df['trial_id'].apply(
-        lambda s: re.match(regex, s)
-    )
-    for attr in ['random_seed', 'num_centroids', 'dataset_size', 'num_colors']:
-        df[attr] = df['regex'].apply(lambda match, attr=attr: match.group(attr))
-        if attr != 'random_seed':
-            df[attr] = df[attr].astype(int)
-    del df['regex']
-    return df
-
-
-def create_image_tribulation(directory):
-    df = create_tribulation(directory)
-    df['neural_network'] = df['trial_id'].apply(
-        lambda s: NeuralNetwork(join_path(directory, s.split('_')[0] + '.hdf5'))
-    )
-    df['int_labels'] = df['neural_network'].apply(lambda nn: tuple(nn.int_labels))
-    df['batch_size'] = df['neural_network'].apply(lambda nn: nn.batch_size)
-    df['num_epochs'] = df['neural_network'].apply(lambda nn: nn.num_epochs)
-    del df['neural_network']
-    return df
