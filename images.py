@@ -270,11 +270,15 @@ def train_neural_network(int_labels, batch_size, num_epochs, dataset_str, verbos
 
     # load the data
     if dataset_str == 'cifar10':
-        (x_train, y_train), (x_test, y_test) = load_cifar10()
-        num_classes = 10
+        (x_train, y_train), (x_test, y_test) = load_cifar10(int_labels)
+        num_classes = len(int_labels)
     else:
-        (x_train, y_train), (x_test, y_test) = load_cifar100()
-        num_classes = 100
+        (x_train, y_train), (x_test, y_test) = load_cifar100(int_labels)
+        num_classes = len(int_labels)
+
+    # map labels to 0-N
+    y_train = np.reshape(np.apply_along_axis(int_labels.index, 1, y_train), (-1, 1))
+    y_test = np.reshape(np.apply_along_axis(int_labels.index, 1, y_test), (-1, 1))
 
     # convert class vectors to one-hot encoding
     y_train = to_categorical(y_train, num_classes)
