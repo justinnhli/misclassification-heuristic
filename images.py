@@ -50,10 +50,10 @@ def load_cifar10(int_labels=None):
 
 def load_cifar100(int_labels=None):
     (x_train, y_train), (x_test, y_test) = cifar100.load_data()
-    # filter out aquarium fish
     if int_labels is None:
         int_labels = list(range(100))
-    int_labels = list(i for i in range(100) if i != AQUARIUM_FISH_Y)
+    # filter out aquarium fish from the int labels
+    int_labels = sorted(i for i in int_labels if i != AQUARIUM_FISH_Y)
     (x_train, y_train), (x_test, y_test) = prepare_data(x_train, y_train, x_test, y_test, int_labels)
     return ((x_train, y_train), (x_test, y_test))
 
@@ -121,7 +121,7 @@ class NeuralNetwork(Classifier):
         self.filepath = filepath
         self._model = None
         self.dataset_str = match.group(1)
-        self.int_labels = binary_to_ints(int(match.group(2)))
+        self.int_labels = sorted(binary_to_ints(int(match.group(2))))
         self.batch_size = int(match.group(3))
         self.num_epochs = int(match.group(4))
         self._test_predictions = None
@@ -181,6 +181,8 @@ class NeuralNetwork(Classifier):
         num_correct = 0
         num_positive = 0
         for actual, predicted in zip(y_test.T[0], y_predict):
+            if actual == AQUARIUM_FISH_Y:
+                continue
             if actual in self.get_ys():
                 if actual == predicted:
                     num_correct += 1
@@ -201,7 +203,10 @@ class NeuralNetwork(Classifier):
             [int]: the classifications
         """
         y_predict_raw = self.model.predict(xs)
-        return list(np.argmax(y_predict_raw, axis=1))
+        return [
+            self.int_labels[i] for i
+            in np.argmax(y_predict_raw, axis=1)
+        ]
 
     def to_file(self, filepath):
         """Save the classifier to file
@@ -241,7 +246,7 @@ class ImageDataset(Dataset):
             (_, _), (_, y_test) = load_cifar10()
         elif self.dataset_str == 'cifar100':
             (_, _), (_, y_test) = load_cifar100()
-        return y_test.transpose().tolist()[0]
+        return y_test.T[0].tolist()
 
 
 def from_file(filepath):
@@ -261,6 +266,7 @@ def train_neural_network(int_labels, batch_size, num_epochs, dataset_str, verbos
         assert isdir(output_path), '"{}" exists but is not a directory'.format(output_path)
     else:
         makedirs(output_path, exist_ok=True)
+    int_labels = sorted(set(int_labels))
 
     # load the data
     if dataset_str == 'cifar10':
