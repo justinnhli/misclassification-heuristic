@@ -308,7 +308,7 @@ PSPACE = PermutationSpace(
     # agent
     memory=['smem', 'epmem'],
     strategy=['exact', 'exhaustive', 'heuristic'],
-    random_seed=[RNG.random() for _ in range(100)],
+    random_seed=[RNG.random() for _ in range(1000)],
     depth=[0, 100],
 ).filter(
     lambda strategy, depth:
